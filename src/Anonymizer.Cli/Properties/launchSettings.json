@@ -1,0 +1,10 @@
+{
+    "profiles": {
+        "cli": {
+            "commandName": "Project",
+            // "commandLineArgs": "run ../../BDX-Développeur-TS-LILA.pdf",
+            "dotnetRunMessages": false,
+            "workingDirectory": "."
+        }
+    }
+}
