@@ -1,2 +1,5 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Anonymizer.Cli/Anonymizer.Cli.csproj" />
+  </Folder>
 </Solution>
