@@ -49,4 +49,7 @@ $SETUP download
 echo "Running installer..."
 $SETUP install
 
+echo "Launching application..."
+$SETUP start &
+
 echo "Installation complete."

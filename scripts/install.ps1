@@ -43,4 +43,7 @@ Write-Host "Downloading models..."
 Write-Host "Running installer..."
 & $SetupCmd install
 
+Write-Host "Launching application..."
+Start-Process $SetupCmd start
+
 Write-Host "Installation complete."

@@ -2,6 +2,11 @@ using System.CommandLine;
 using System.Runtime.Versioning;
 using System.Text.Json;
 
+using Anonymizer.Autostart;
+
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
 namespace Anonymizer.Cli;
 
 [SupportedOSPlatform("Linux")]
@@ -12,10 +17,25 @@ internal sealed class InstallCommand : Command
         Installs the application into the user directory.
         """;
 
-    public InstallCommand() : base("install", HelpDesc) =>
-        SetAction((parseResult) => Install());
+    private readonly Option<bool> _noAutostartOption = new("--no-autostart")
+    {
+        Description = "Do not enable autostart after installation.",
+        DefaultValueFactory = (_) => false,
+    };
 
-    private static void Install()
+    public InstallCommand(IHostBuilder builder) : base("install", HelpDesc)
+    {
+        Add(_noAutostartOption);
+        SetAction((parseResult) =>
+        {
+            var app = builder.Build();
+            var autostart = app.Services.GetRequiredService<IAutostartManager>();
+            var noAutostart = parseResult.GetRequiredValue(_noAutostartOption);
+            Install(noAutostart ? null : autostart);
+        });
+    }
+
+    private static void Install(IAutostartManager? autostart)
     {
         DirectoryInfo installDir = new(PathProvider.GetInstallRoot());
         DirectoryInfo currentDir = new(PathProvider.BaseDir);
@@ -39,5 +59,7 @@ internal sealed class InstallCommand : Command
         };
         string json = JsonSerializer.Serialize(metadata, new JsonSerializerOptions { WriteIndented = true });
         File.WriteAllText(Path.Combine(installDir.FullName, "installed.json"), json);
+
+        autostart?.SetAutostart(true);
     }
 }

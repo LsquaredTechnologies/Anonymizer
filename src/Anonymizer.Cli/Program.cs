@@ -1,4 +1,5 @@
 ﻿using Anonymizer;
+using Anonymizer.Autostart;
 using Anonymizer.Cli;
 
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +22,11 @@ builder.ConfigureServices((context, services) =>
 
     services.AddSingleton<Anonymizer.Python.Runner>();
     services.AddSingleton<Anonymizer.Python.VirtualEnv>();
+
+    if (OperatingSystem.IsWindows())
+        services.AddSingleton<IAutostartManager, WindowsAutostart>();
+    else if (OperatingSystem.IsLinux())
+        services.AddSingleton<IAutostartManager, LinuxAutostart>();
 });
 builder.ConfigureLogging((builder) =>
 {
