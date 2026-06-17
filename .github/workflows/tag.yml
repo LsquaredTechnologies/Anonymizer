@@ -1,0 +1,50 @@
+name: Create Tag
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  create-tag:
+    name: Create Tag
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ format('v{0}', steps.semver.outputs.majorMinorPatch) }}
+      version: ${{ steps.semver.outputs.majorMinorPatch }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v4.5.0
+        with:
+          versionSpec: '6.x'
+
+      - name: Semantic Versioning
+        uses: gittools/actions/gitversion/execute@v4.5.0
+        id: semver
+
+      - name: Check tag existence
+        run: |
+          if git rev-parse "v${{ steps.semver.outputs.majorMinorPatch }}" >/dev/null 2>&1; then
+            echo "Tag already exists, skipping."
+            exit 0
+          fi
+
+      - name: Create git tag
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag "v${{ steps.semver.outputs.majorMinorPatch }}"
+          git push origin "v${{ steps.semver.outputs.majorMinorPatch }}"
+
+      - name: Trigger release workflow
+        uses: benc-uk/workflow-dispatch@v1
+        with:
+          workflow: release.yml
+          ref: main
+          inputs: '{"tag": "v${{ steps.semver.outputs.majorMinorPatch }}"}'

@@ -1,0 +1,67 @@
+name: Create Release
+
+on:
+  push:
+    tags: [v*]
+  workflow_dispatch:
+    inputs:
+      tag:
+        required: true
+        type: string
+
+jobs:
+  build:
+    uses: ./.github/workflows/ci.yml
+    with:
+      tag: ${{ github.event.inputs.tag || github.ref_name }}
+
+  release:
+    name: Publish Release
+    needs: [build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download artifacts (Linux)
+        uses: actions/download-artifact@v8
+        with:
+          name: release-files-linux
+          path: artifacts/linux
+
+      - name: Download artifacts (Windows)
+        uses: actions/download-artifact@v8
+        with:
+          name: release-files-win
+          path: artifacts/win
+
+      - name: Download install scripts
+        uses: actions/download-artifact@v8
+        with:
+          name: install-scripts
+          path: artifacts
+
+      - name: Changelog
+        id: changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --tag ${{ github.event.inputs.tag || github.ref_name }} -o artifacts/CHANGELOG.md
+        env:
+          GIT_CLIFF_OUTPUT: content
+
+      - name: Publish Release
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: Release ${{ github.event.inputs.tag || github.ref_name }}
+          body_path: artifacts/CHANGELOG.md
+          files: |
+            artifacts/CHANGELOG.md
+            artifacts/install.*
+            artifacts/**/setup-*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
