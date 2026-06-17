@@ -20,10 +20,12 @@ internal sealed class RootCommand : System.CommandLine.RootCommand
 
         if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux())
         {
-            Add(new InstallCommand());
-            Add(new UninstallCommand());
+            Add(new InstallCommand(builder));
+            Add(new UninstallCommand(builder));
             Add(new UpdateCommand());
         }
+
+        Add(new StartCommand(builder));
 
         TreatUnmatchedTokensAsErrors = true;
     }
