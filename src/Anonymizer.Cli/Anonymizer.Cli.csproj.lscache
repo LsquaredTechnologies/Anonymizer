@@ -59,6 +59,10 @@ TemporaryDependencyNodeTargetIdentifier=net10.0
 [sourceFiles]
 AnonymizerService.cs
 Application.cs
+Autostart/
+ IAutostartManager.cs
+ LinuxAutostart.cs
+ WindowsAutostart.cs
 Cli/
  DownloadCommand.cs
  FilesPathArgument.cs
