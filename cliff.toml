@@ -1,0 +1,76 @@
+[changelog]
+header = """
+# 🚀 CHANGELOG
+
+All notable changes to this project will be documented in this file.
+
+"""
+body = """
+{%- macro remote_url() -%}\
+    https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}\
+{%- endmacro -%}
+{% if version -%}\
+    {% if previous.version %}\
+        ## 🏷️  [{{ version | trim_start_matches(pat="v") }}]({{ self::remote_url() }}/compare/{{ previous.version }}..{{ version }}) - {{ timestamp | date(format="%Y-%m-%d") }}
+    {% else %}\
+        ## 🏷️  [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}
+    {% endif %}
+{% else -%}\
+    ## 🏷️  [Unreleased]
+{% endif -%}\
+{% if commits | length == 0 %}\
+    No changes since the previous release.\
+{% endif %}\
+{% for group, commits in commits | filter(attribute="merge_commit", value=false) | group_by(attribute="group") %}
+    ### {{ group }}
+    {% for commit in commits %}
+        - {% if commit.scope %}_({{ commit.scope }})_ {% endif %}\
+            {% if commit.breaking %}[💥 **Breaking Changes**] {% endif %}\
+            {{ commit.message | split(pat="\n") | first | upper_first | trim }} - [{{ commit.id | truncate(length=7) }}]({{ self::remote_url() }}/commits/{{ commit.id }})\
+            {% if commit.remote.username %} - @{{ commit.remote.username }}{%- endif -%}
+            {% if commit.remote.pr_number %} - [#{{ commit.remote.pr_number }}]({{ self::remote_url() }}/pull/{{ commit.remote.pr_number }}){%- endif -%}
+            {% if commit.footers %}\
+                {% for footer in commit.footers -%}
+                    , {{ footer.token }}{{ footer.separator }}{{ footer.value }}\
+                {% endfor %}\
+            {% endif %}\
+    {% endfor %}
+{% endfor %}
+"""
+footer = """
+
+<!-- Generated with ❤️  by git-cliff -->
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+split_commits = false
+sort_commits = "oldest"
+commit_preprocessors = [
+  # Remove issue numbers.
+  { pattern = '\((\w+\s)?#([0-9]+)\)', replace = "" },
+]
+commit_parsers = [
+    # Special
+    { message = "config", group = "<!-- 09 -->⚙️  Configuration" },
+    { message = "ignore", group = "<!-- 09 -->⚙️  Configuration" },
+    { body = ".*security", group = "<!-- 11 -->🔒 Security" },
+    # Conventional commits
+    { message = "^feat", group = "<!-- 00 -->✨ Features" },
+    { message = "^fix", group = "<!-- 01 -->🐛 Bug Fixes" },
+    { message = "^perf", group = "<!-- 02 -->⚡ Performance Improvements" },
+    { message = "^refactor", group = "<!-- 03 -->♻️ Refactoring" },
+    { message = "^test", group = "<!-- 04 -->🧪 Tests" },
+    { message = "^build", group = "<!-- 05 -->🏗️  Build System" },
+    { message = "^ci", group = "<!-- 06 -->🔄 Continuous Integration" },
+    { message = "^docs", group = "<!-- 07 -->📝 Documentation" },
+    { message = "^chore", group = "<!-- 08 -->📦 Miscellaneous" },
+    { message = "^style", group = "<!-- 10 -->💄 Styling" },
+    # Ignore some commits
+    { message = "^revert", skip = true },
+    { message = "^Merge", skip = true },
+    { message = "^Revert", skip = true },
+    { body = "$^", skip = true },
+]
