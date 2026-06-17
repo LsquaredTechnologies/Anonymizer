@@ -1,0 +1,80 @@
+name: Continuous Integration
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_call:
+    inputs:
+      tag:
+        required: false
+        type: string
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        target: [linux, windows]
+        include:
+          - target: linux
+            rid: linux-x64
+            exe: anonymizer
+            prefix: linux
+          - target: windows
+            rid: win-x64
+            exe: anonymizer.exe
+            prefix: win
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Compute version
+        id: version
+        run: |
+          TAG="${{ inputs.tag }}"
+          if [ -z "$TAG" ]; then
+            echo "version=0.0.0" >> $GITHUB_OUTPUT
+          else
+            CLEAN="${TAG#v}"
+            echo "version=$CLEAN" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download uv
+        run: |
+          chmod +x scripts/download_uv.sh
+          scripts/download_uv.sh ./src/Anonymizer.Cli/tools
+
+      - name: Build ${{ matrix.target }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          dotnet publish \
+            src/Anonymizer.Cli \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            -p:Version=$VERSION \
+            -o artifacts/${{ matrix.prefix }}
+
+      - name: Package ${{ matrix.target }}
+        if: github.event_name != 'pull_request'
+        run: |
+          cd artifacts/${{ matrix.prefix }}
+          zip -r "../setup-${{ matrix.prefix }}.zip" ${{ matrix.exe }} scripts tools
+
+      - name: Upload install scripts
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: install-scripts
+          path: scripts/install.*
+
+      - name: Upload artifacts
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-files-${{ matrix.prefix }}
+          path: artifacts/setup-*.zip
