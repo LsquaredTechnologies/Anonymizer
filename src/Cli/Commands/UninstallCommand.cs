@@ -3,6 +3,9 @@ using System.Runtime.Versioning;
 
 using Anonymizer.Cli.Lifetime;
 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+
 namespace Anonymizer.Cli.Commands;
 
 [SupportedOSPlatform("Linux")]
@@ -13,10 +16,15 @@ internal sealed class UninstallCommand : Command
         Uninstalls the application from the user directory.
         """;
 
-    public UninstallCommand() : base("uninstall", HelpDesc) =>
-        SetAction((parseResult) => Uninstall());
+    public UninstallCommand(IHostBuilder builder) : base("uninstall", HelpDesc) =>
+        SetAction((parseResult) =>
+        {
+            var app = builder.Build();
+            var autostart = app.Services.GetRequiredService<IAutostartManager>();
+            Uninstall(autostart);
+        });
 
-    private static void Uninstall()
+    private static void Uninstall(IAutostartManager autostart)
     {
         using var alreadyRunning = SingleInstance.TryAcquire("Setup");
 
@@ -33,6 +41,8 @@ internal sealed class UninstallCommand : Command
 
         try
         {
+            autostart.SetAutostart(false);
+
             installDir.Delete(recursive: true);
             Console.WriteLine("Uninstallation complete.");
         }

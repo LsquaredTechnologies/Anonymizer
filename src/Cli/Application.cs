@@ -7,7 +7,7 @@ namespace Anonymizer.Cli;
 
 internal static class Application
 {
-    public static readonly string Name = typeof(Application).Assembly.GetName().Name!.ToLowerInvariant();
+    public static readonly string Name = typeof(Application).Assembly.GetName().Name!;
 
     public static readonly string Path = Environment.ProcessPath!;
 
@@ -33,12 +33,12 @@ internal static class Application
             if (OperatingSystem.IsWindows())
             {
                 string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-                return Combine(local, Name);
+                return Combine(local, Name.ToLowerInvariant());
             }
             else if (OperatingSystem.IsLinux())
             {
                 string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                return Combine(home, ".local", "share", Name);
+                return Combine(home, ".local", "share", Name.ToLowerInvariant());
             }
             throw new PlatformNotSupportedException();
         }

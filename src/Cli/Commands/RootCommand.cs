@@ -24,8 +24,8 @@ internal sealed class RootCommand : System.CommandLine.RootCommand
         {
             if (Path.GetFileNameWithoutExtension(Environment.ProcessPath) is "setup")
             {
-                Add(new InstallCommand());
-                Add(new UninstallCommand());
+                Add(new InstallCommand(builder));
+                Add(new UninstallCommand(builder));
             }
 
             Add(new UpdateCommand());
