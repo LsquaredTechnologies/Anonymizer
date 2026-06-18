@@ -18,6 +18,13 @@ internal sealed class RootCommand : System.CommandLine.RootCommand
         Add(new RunCommand(builder));
         Add(new DownloadCommand(builder));
 
+        if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux())
+        {
+            Add(new InstallCommand());
+            Add(new UninstallCommand());
+            Add(new UpdateCommand());
+        }
+
         TreatUnmatchedTokensAsErrors = true;
     }
 }

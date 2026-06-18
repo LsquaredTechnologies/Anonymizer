@@ -63,9 +63,12 @@ Cli/
  DownloadCommand.cs
  FilesPathArgument.cs
  InputArgument.cs
+ InstallCommand.cs
  ModelPathArgument.cs
  RootCommand.cs
  RunCommand.cs
+ UninstallCommand.cs
+ UpdateCommand.cs
  VerboseOption.cs
 Models/
  FaceModelDownloader.cs
