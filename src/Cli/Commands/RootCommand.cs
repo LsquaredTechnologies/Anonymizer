@@ -17,6 +17,7 @@ internal sealed class RootCommand : System.CommandLine.RootCommand
         Add(new EnvironmentVariablesDirective());
 
         Add(new DownloadCommand(builder));
+        Add(new RunCommand(builder));
 
         TreatUnmatchedTokensAsErrors = true;
     }
