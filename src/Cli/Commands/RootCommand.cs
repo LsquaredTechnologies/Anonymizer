@@ -1,5 +1,4 @@
 using System.CommandLine;
-using System.ComponentModel;
 
 using Microsoft.Extensions.Hosting;
 
@@ -20,6 +19,17 @@ internal sealed class RootCommand : System.CommandLine.RootCommand
         Add(new RunCommand(builder));
         Add(new ConfigCommand(builder));
         Add(new StartCommand(builder));
+
+        if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux())
+        {
+            if (Path.GetFileNameWithoutExtension(Environment.ProcessPath) is "setup")
+            {
+                Add(new InstallCommand());
+                Add(new UninstallCommand());
+            }
+
+            Add(new UpdateCommand());
+        }
 
         TreatUnmatchedTokensAsErrors = true;
     }

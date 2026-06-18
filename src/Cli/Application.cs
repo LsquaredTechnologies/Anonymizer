@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.Versioning;
 
 using static System.IO.Path;
 
@@ -6,11 +7,41 @@ namespace Anonymizer.Cli;
 
 internal static class Application
 {
+    public static readonly string Name = typeof(Application).Assembly.GetName().Name!.ToLowerInvariant();
+
+    public static readonly string Path = Environment.ProcessPath!;
+
+    public static readonly FileInfo File = new(Path);
+
     internal static class Base
     {
-        public static readonly string Path = GetDirectoryName(Environment.ProcessPath)!;
+        public static readonly string Path = GetDirectoryName(Application.Path)!;
 
         public static readonly DirectoryInfo Dir = new(Path);
+    }
+
+    [SupportedOSPlatform("Linux")]
+    [SupportedOSPlatform("Windows")]
+    internal static class Install
+    {
+        public static readonly string Path = GetInstallPath();
+
+        public static readonly DirectoryInfo Dir = new(Path);
+
+        private static string GetInstallPath()
+        {
+            if (OperatingSystem.IsWindows())
+            {
+                string local = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+                return Combine(local, Name);
+            }
+            else if (OperatingSystem.IsLinux())
+            {
+                string home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                return Combine(home, ".local", "share", Name);
+            }
+            throw new PlatformNotSupportedException();
+        }
     }
 
     internal static class Models
@@ -74,6 +105,15 @@ internal static class Application
     internal static class AppSettings
     {
         public static readonly string Path = Join(Base.Path, "appsettings.json")!;
+    }
+
+    [SupportedOSPlatform("Linux")]
+    [SupportedOSPlatform("Windows")]
+    internal static class Metadata
+    {
+        public static readonly string Path = Join(Install.Path, "metadata.json")!;
+
+        public static FileInfo File = new(Path);
     }
 
     internal static class Config

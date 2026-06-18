@@ -30,7 +30,7 @@ internal sealed class ConfigSetCommand : Command
     {
         Add(_keyArgument);
         Add(_valueArgument);
-        SetAction((parseResult) =>
+        SetAction(async (parseResult) =>
         {
             var app = builder.Build();
             var configuration = app.Services.GetRequiredService<IConfiguration>();
@@ -45,12 +45,7 @@ internal sealed class ConfigSetCommand : Command
                 { key, value }
             };
             using var stream = File.Open(Application.AppSettings.Path, FileMode.Create, FileAccess.Write);
-            JsonSerializer.Serialize(stream, o, JsonOptions);
+            await JsonSerializer.SerializeAsync(stream, o, Defaults.JsonOptions);
         });
     }
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        WriteIndented = false,
-    };
 }
