@@ -8,13 +8,13 @@ namespace Anonymizer.Cli.Lifetime;
 internal sealed record class Metadata(
     DateTime? InstalledAt,
     Version? Version,
-    FileInfo? Source)
+    string? Source)
 {
     public static async Task<Metadata> Load()
     {
         using var stream = File.OpenRead(Application.Metadata.Path);
         var metadata = await JsonSerializer.DeserializeAsync<Metadata>(stream);
-        return metadata ?? new(null, null, Application.File);
+        return metadata ?? new(null, null, string.Empty);
     }
 
     public async Task Save()
