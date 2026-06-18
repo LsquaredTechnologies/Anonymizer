@@ -13,6 +13,19 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Update="tools/uv" Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+    <None Update="tools/uv.exe" Condition="'$(RuntimeIdentifier)' == 'win-x64'">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="System.CommandLine" Version="3.0.0-*" />
   </ItemGroup>
 
