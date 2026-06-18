@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+
 using static System.IO.Path;
 
 namespace Anonymizer.Cli;

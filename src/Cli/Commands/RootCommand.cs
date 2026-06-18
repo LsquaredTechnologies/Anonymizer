@@ -19,6 +19,7 @@ internal sealed class RootCommand : System.CommandLine.RootCommand
         Add(new DownloadCommand(builder));
         Add(new RunCommand(builder));
         Add(new ConfigCommand(builder));
+        Add(new StartCommand(builder));
 
         TreatUnmatchedTokensAsErrors = true;
     }

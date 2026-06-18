@@ -18,7 +18,6 @@ internal sealed class RunCommand : Command
         Add(_input);
         SetAction(async (result, cancellationToken) =>
         {
-            builder.ConfigureServices((services) => services.AddSingleton<AnonymizerService>());
             var app = builder.Build();
             var anonymizer = app.Services.GetRequiredService<AnonymizerService>();
             var inputFiles = result.GetRequiredValue(_input);

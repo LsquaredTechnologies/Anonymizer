@@ -15,18 +15,20 @@ builder.ConfigureServices((context, services) =>
 {
     services.AddSingleton<PIIModelDownloader>();
     services.AddHttpClient<FaceModelDownloader>();
-
     services.AddSingleton((sp) => ActivatorUtilities.CreateInstance<UVRunner>(sp, Application.Tools.UV.File));
+    services.AddSingleton<AnonymizerService>();
 });
 builder.ConfigureAppConfiguration((config) =>
-    config.AddJsonFile(Application.AppSettings.Path, optional: true));
+    config.AddJsonFile(Application.AppSettings.Path, optional: true, reloadOnChange: true));
 builder.ConfigureLogging((builder) =>
 {
     builder.ClearProviders();
+    builder.AddFilter((category, level) => category?.StartsWith("Microsoft.") is false || level >= LogLevel.Error);
     builder.AddSimpleConsole((options) =>
     {
         options.SingleLine = true;
         options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] ";
+        options.IncludeScopes = false;
     });
 });
 
