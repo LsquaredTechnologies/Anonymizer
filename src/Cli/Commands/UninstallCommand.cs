@@ -18,6 +18,8 @@ internal sealed class UninstallCommand : Command
 
     private static void Uninstall()
     {
+        using var alreadyRunning = SingleInstance.TryAcquire("Setup");
+
         DirectoryInfo installDir = Application.Install.Dir;
         if (!installDir.Exists)
         {

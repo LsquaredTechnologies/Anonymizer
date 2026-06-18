@@ -1,7 +1,10 @@
 using System.CommandLine;
 
+using Anonymizer.Cli.Lifetime;
+
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.VisualBasic;
 
 namespace Anonymizer.Cli.Commands;
 
@@ -16,6 +19,7 @@ internal sealed class StartCommand : Command
         Hidden = true;
         SetAction(async (_) =>
         {
+            using var alreadyRunning = SingleInstance.TryAcquire("App");
             builder.ConfigureServices((context, services) =>
             {
                 services.AddHostedService<FilesWatcher>();
@@ -23,5 +27,6 @@ internal sealed class StartCommand : Command
             });
             await builder.Build().RunAsync();
         });
+
     }
 }

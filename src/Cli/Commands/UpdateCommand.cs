@@ -18,6 +18,8 @@ internal sealed class UpdateCommand : Command
 
     private static async Task Update()
     {
+        using var alreadyRunning = SingleInstance.TryAcquire("Setup");
+
         DirectoryInfo installDir = Application.Install.Dir;
         if (!installDir.Exists)
         {

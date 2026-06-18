@@ -18,6 +18,7 @@ internal sealed class InstallCommand : Command
 
     private static async Task Install()
     {
+        using var alreadyRunning = SingleInstance.TryAcquire("Setup");
         ProcessManager.KillRunningInstances();
 
         var installDir = Application.Install.Dir;
