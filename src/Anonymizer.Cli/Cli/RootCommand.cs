@@ -26,6 +26,7 @@ internal sealed class RootCommand : System.CommandLine.RootCommand
         }
 
         Add(new StartCommand(builder));
+        Add(new ConfigurationCommand(builder));
 
         TreatUnmatchedTokensAsErrors = true;
     }

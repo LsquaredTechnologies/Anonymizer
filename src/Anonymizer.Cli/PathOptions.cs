@@ -2,6 +2,6 @@ namespace Anonymizer;
 
 internal sealed class PathOptions
 {
-    public required string Models { get; init; }
+    public string Models { get; init; } = "./models";
     public required string Files { get; init; }
 }

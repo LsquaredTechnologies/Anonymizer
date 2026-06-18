@@ -1,7 +1,8 @@
-﻿using Anonymizer;
+using Anonymizer;
 using Anonymizer.Autostart;
 using Anonymizer.Cli;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.WindowsServices;
@@ -28,6 +29,8 @@ builder.ConfigureServices((context, services) =>
     else if (OperatingSystem.IsLinux())
         services.AddSingleton<IAutostartManager, LinuxAutostart>();
 });
+builder.ConfigureAppConfiguration((config) =>
+    config.AddJsonFile(PathProvider.AppSettingsPath, optional: true));
 builder.ConfigureLogging((builder) =>
 {
     builder.ClearProviders();
