@@ -5,7 +5,7 @@ namespace Anonymizer.Cli;
 
 internal abstract class ExternalScriptRunner
 {
-    public abstract Task<int> ExecuteScriptAsync(FileInfo scriptFile, string[] arguments, CancellationToken cancellationToken);
+    public abstract Task<int> ExecuteScriptAsync(FileInfo scriptFile, string[] arguments, DirectoryInfo workingDirectory, CancellationToken cancellationToken);
 
     protected static async Task<int> RunProcessAsync(
         ProcessStartInfo startInfo,
