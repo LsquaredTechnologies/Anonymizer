@@ -3,6 +3,7 @@ using Anonymizer.Cli.Commands;
 using Anonymizer.Cli.Downloaders;
 using Anonymizer.Cli.Python;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,8 @@ builder.ConfigureServices((context, services) =>
 
     services.AddSingleton((sp) => ActivatorUtilities.CreateInstance<UVRunner>(sp, Application.Tools.UV.File));
 });
+builder.ConfigureAppConfiguration((config) =>
+    config.AddJsonFile(Application.AppSettings.Path, optional: true));
 builder.ConfigureLogging((builder) =>
 {
     builder.ClearProviders();

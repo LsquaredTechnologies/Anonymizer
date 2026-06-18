@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using static System.IO.Path;
 
 namespace Anonymizer.Cli;
@@ -67,5 +68,15 @@ internal static class Application
 
             public static FileInfo File = new(Path);
         }
+    }
+
+    internal static class AppSettings
+    {
+        public static readonly string Path = Join(Base.Path, "appsettings.json")!;
+    }
+
+    internal static class Config
+    {
+        public static readonly ReadOnlySet<string> ValidConfigKey = ["filesdir"];
     }
 }
