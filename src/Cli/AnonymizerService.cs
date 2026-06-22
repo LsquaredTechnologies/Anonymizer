@@ -29,6 +29,9 @@ internal sealed partial class AnonymizerService(UVRunner runner, ILogger<Anonymi
 
     public async Task AnonymizeFileAsync(FileInfo file, CancellationToken cancellationToken = default)
     {
+        // skip if already anonymized
+        if (file.Name.EndsWith(".anon.pdf")) return;
+
         await _semaphore.WaitAsync(cancellationToken);
         try
         {
