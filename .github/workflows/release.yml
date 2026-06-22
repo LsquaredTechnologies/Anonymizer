@@ -47,7 +47,7 @@ jobs:
         uses: orhun/git-cliff-action@v4
         with:
           config: cliff.toml
-          args: --tag ${{ github.event.inputs.tag || github.ref_name }} -o artifacts/CHANGELOG.md
+          args: --latest --tag ${{ github.event.inputs.tag || github.ref_name }} -o artifacts/CHANGELOG.md
         env:
           GIT_CLIFF_OUTPUT: content
 
