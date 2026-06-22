@@ -1,0 +1,107 @@
+Passionné, autonome et expérimenté, j’aime à appliquer et à expliquer les recommandations,
+principes et patterns de programmation afin de rendre les logiciels plus fiables et plus robustes.
+Expérience professionnelle
+2017 - auj. Econocom @ Mérignac ● Architecte logiciel .Net
+Définition de proposition commerciale et technique suite à appels d’offres ; mise en place
+de l’architecture .Net Core chez Cdiscount (sous K8S).
+Mise en place de composants (login, logging, event bus) en .Net et .Net Core chez Betclic.
+Technologies : .Net Core, MVC, Docker, Xamarin
+2012 - 2017 ITS Group @ Gradignan ● Architecte logiciel .Net
+Analyse et mise en place de fonctionnalités clés du framework Cdiscount : feature flipping,
+tests MVT, logging, centralisation de la configuration, Data access, OAuth ;
+accompagnement des développeurs à leur utilisation ; analyse de solutions existantes à
+intégrer ou à mettre à jour : InRule, Quartz.
+TMA, développement d’un outil d’ouverture des programmes immobiliers et migration
+de SVN+Jenkins vers TFS Express chez Pichet.
+Migration d’une application de reporting chez Thalès Service pour TOTAL.
+Technologies : WCF, MVC, WebApi, Angular, .Net Core, SQL Server, SSIS, SSAS, IIS
+2013 - 2015 Epitech @ Bordeaux ● Enseignant (autoentrepreneur)
+Présentation de .Net, initiation C# et WPF et validation des acquis.
+2011 - 2012 AKKA @ Mérignac ● Ingénieur d’études .Net
+TMA puis développement de services métiers dans l’équipe Services chez Cdiscount.
+Technologies : WCF, WF, MVC
+2010 - 2011 AFTER-MOUSE.com @ Lyon ● Développeur senior .Net
+Développement d’applications et jeux tactiles sur table Surface, système de partage et de
+publication de carte postale vers Facebook ou par email, système de licensing pour les
+applications vendues, moteur de traitement d’images.
+Technologies : WPF, XNA, Pixel Shader, MVC, WebApi, SMTP
+2007 - 2010 AST Groupe @ Décines-Charpieu ● Leader technique .Net
+Mise en place de l’architecture technique, développement de l’IHM et des services
+métiers, rédaction du cahier des charges et des spécifications.
+Technologies : WPF, WCF, SQL Server, IIS
+2002 - 2008 AST Groupe @ Décines-Charpieu ● Développeur Delphi
+Recueil des besoins, choix du langage, modélisation de la base de données,
+développement IHM, suivi de recette et garantie, support aux utilisateurs.
+Technologies : Delphi VCL, Firebird
+Formation et diplômes
+2001 La Martinière @ Lyon ● DNTS spécialisation informatique (non validé)
+2000 IUT génie civil @ Talence ● DUT
+1998 Sainte-Famille Saintonge @ Bordeaux ● BAC F4
+Projets personnels et temps libre
+Logiciel de domotique (démarrage)
+Jeux : sudoku, plateforme, casse-brique, pong (non publié)
+Moteur de jeux basé sur le pattern Component-Entity-System
+Blog sur le développement C# et .Net
+Challenges de programmation sur CodinGame
+Jeux de société
+Informations
+Né le 27 août 1980
+à BORDEAUX
+39 ans, marié, 2 enfants
+
+Langages
+C#
+SQL
+Pascal/Delphi
+Javascript/Typescript
+C/C++
+PHP
+Java
+Python
+Langages descriptifs
+JSON
+XML/XSL
+YAML
+Outils
+Visual Studio
+MSBuild
+TFS
+Git
+Enterprise Architect
+SGBD
+MS SQL Server
+MySQL/MariaDB
+PostgreSQL
+Interbase/Firebird
+IHM
+XAML
+HTML/CSS
+MVC/Razor
+Systèmes
+Windows
+GNU/Linux
+Docker
+K8S
+Serveurs web
+IIS
+Apache
+Nginx
+Réseau
+REST
+SOAP
+OAuth 2
+HTTP
+Langues
+Anglais technique
+Anglais courant
+Véhicule
+Permis B
+25 rue Paul Langevin
+33700 Mérignac
+lionel.lalande@lsquared.fr
+linkedin.com/in/lionellalande
++33 950 930 350
++33 602 185 144
+
+ARCHITECTE LOGICIEL .NET
+Lionel LALANDE
