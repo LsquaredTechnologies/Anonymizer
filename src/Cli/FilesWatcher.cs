@@ -79,9 +79,6 @@ internal sealed partial class FilesWatcher : BackgroundService
                 {
                     await Task.Delay(200, cancellationToken);
 
-                    // skip if anonymized file
-                    if (e.FullPath.EndsWith(".anon.pdf")) return;
-
                     LogFileFound(e.FullPath);
                     FileInfo file = new(e.FullPath);
                     _ = Task.Run(() => _anonymizer.AnonymizeFileAsync(file, cancellationToken), cancellationToken);
