@@ -1,5 +1,9 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/Cli/Anonymizer.Cli.csproj" />
+    <Project Path="src/Extractor.Documents/Anonymizer.Extractor.Documents.csproj" />
+    <Project Path="src/Extractor.Documents.PDF/Anonymizer.Extractor.Documents.PDF.csproj" />
+    <Project Path="src/Extractor.PII/Anonymizer.Extractor.PII.csproj" />
+    <Project Path="src/Extractor.PII.Tests/Anonymizer.Extractor.PII.Tests.csproj" />
   </Folder>
 </Solution>

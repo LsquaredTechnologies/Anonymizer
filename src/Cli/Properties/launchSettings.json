@@ -2,7 +2,8 @@
     "profiles": {
         "cli": {
             "commandName": "Project",
-            "commandLineArgs": "start",
+            //"commandLineArgs": "start",
+            "commandLineArgs": "\"../../document.md\"",
             "dotnetRunMessages": false,
             "workingDirectory": "."
         }

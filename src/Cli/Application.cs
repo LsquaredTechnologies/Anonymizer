@@ -96,7 +96,7 @@ internal static class Application
 
         internal static class UV
         {
-            public static readonly string Path = Join(Tools.Path, ChangeExtension("uv", Extension));
+            public static readonly string Path = Join(Tools.Path, "uv" + Extension);
 
             public static FileInfo File = new(Path);
         }

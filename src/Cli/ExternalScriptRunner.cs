@@ -27,7 +27,15 @@ internal abstract class ExternalScriptRunner
             Console.ForegroundColor = previous;
         };
 
-        process.Start();
+        try
+        {
+            process.Start();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to start process: {ex}");
+            throw;
+        }
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
         await process.WaitForExitAsync(cancellationToken);
