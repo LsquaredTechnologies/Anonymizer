@@ -1,0 +1,17 @@
+[package]
+name = "Anonymizer_Core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+image = "0.25"
+lopdf = "0.33.0"
+ort = { version = "2.0.0-rc.4", default-features = false, features = [ "download-binaries", "tls-rustls", "std" ] }
+regex = "1.10"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokenizers = "0.19.1"
+ttf-parser = "0.20"
+
+[lib]
+crate-type = ["cdylib"]
