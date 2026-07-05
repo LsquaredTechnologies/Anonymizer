@@ -2,6 +2,10 @@
     "profiles": {
         "cli": {
             "commandName": "Project",
+            //"commandLineArgs": "download",
+            //"commandLineArgs": "config get filesdir",
+            //"commandLineArgs": "config set filesdir %USERPROFILE%/Documents",
+            //"commandLineArgs": "run \"../../samples/document.pdf\"",
             "commandLineArgs": "start",
             "dotnetRunMessages": false,
             "workingDirectory": "."
