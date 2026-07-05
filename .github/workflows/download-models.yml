@@ -1,0 +1,44 @@
+name: Download Models
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/download-models.yml
+  workflow_call:
+  workflow_dispatch:
+
+jobs:
+  download-models:
+    name: Download ONNX Models
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install UV
+        uses: astral-sh/setup-uv@v8.2.0
+
+      - name: Download and build PII model
+        run: |
+          mkdir -p artifacts/models/pii
+          uv run ./scripts/download-model.py --model onnx-community/pii-ner-nemotron-ONNX --out artifacts/models/pii
+
+      - name: Download Face model
+        run: |
+          mkdir -p artifacts/models/face
+          curl -L -o artifacts/models/face/model.onnx \
+            https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB/raw/master/models/onnx/version-RFB-320.onnx
+
+      - name: Create model archives
+        run: |
+          zip -j -r artifacts/face_model.zip artifacts/models/face/*
+          zip -j -r artifacts/pii_model.zip artifacts/models/pii/*
+
+      - name: Upload models artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: onnx-models
+          path: |
+            artifacts/face_model.zip
+            artifacts/pii_model.zip

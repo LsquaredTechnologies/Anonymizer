@@ -9,15 +9,23 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: write
+  actions: read
+
 jobs:
-  build:
-    uses: ./.github/workflows/ci.yml
+  build-rust:
+    uses: ./.github/workflows/build-rust.yml
+
+  build-csharp:
+    needs: [build-rust]
+    uses: ./.github/workflows/build-csharp.yml
     with:
       tag: ${{ github.event.inputs.tag || github.ref_name }}
 
   release:
     name: Publish Release
-    needs: [build]
+    needs: [build-csharp]
     runs-on: ubuntu-latest
 
     steps:
@@ -38,13 +46,61 @@ jobs:
           name: setup-win
           path: artifacts
 
+      - name: Check artifacts (ONNX Models)
+        id: latest-models-run
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner,
+              repo,
+              workflow_id: 'download-models.yml',
+              status: 'completed',
+              per_page: 50,
+            });
+            let selectedRunId = null;
+            for (const run of runs) {
+              if (run.conclusion !== 'success') {
+                continue;
+              }
+              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({
+                owner,
+                repo,
+                run_id: run.id,
+                per_page: 100,
+              });
+              const hasModels = artifacts.data.artifacts.some(
+                artifact => artifact.name === 'onnx-models' && !artifact.expired,
+              );
+              if (hasModels) {
+                selectedRunId = run.id;
+                break;
+              }
+            }
+            if (!selectedRunId) {
+              core.setFailed('No successful run with non-expired onnx-models artifact was found for download-models.yml.');
+              return;
+            }
+            core.info(`Using onnx-models artifact from run ${selectedRunId}`);
+            core.setOutput('run_id', selectedRunId.toString());
+
+      - name: Download model archives artifact
+        uses: actions/download-artifact@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.latest-models-run.outputs.run_id }}
+          name: onnx-models
+          path: artifacts
+
       - name: Copy install scripts
         run: |
           cp ./scripts/install.* ./artifacts/
 
       - name: Changelog
         id: changelog
-        uses: orhun/git-cliff-action@v4
+        uses: orhun/git-cliff-action@v4.8.0
         with:
           config: cliff.toml
           args: --latest --tag ${{ github.event.inputs.tag || github.ref_name }} -o artifacts/CHANGELOG.md
@@ -59,6 +115,7 @@ jobs:
           body_path: artifacts/CHANGELOG.md
           files: |
             artifacts/CHANGELOG.md
+            artifacts/*_model.zip
             artifacts/install.*
             artifacts/setup*
         env:

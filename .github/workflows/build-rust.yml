@@ -1,0 +1,56 @@
+name: Build Rust
+
+on:
+  workflow_call:
+
+jobs:
+  build-rust:
+    name: Build Rust (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - target: linux
+            os: ubuntu-latest
+            artifact_name: rust-core-linux
+            artifact_path: src/Core/target/release/Anonymizer.Core.so
+          - target: windows
+            os: windows-latest
+            artifact_name: rust-core-windows
+            artifact_path: src/Core/target/release/Anonymizer.Core.dll
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable on 2026-07-03
+
+      - name: Build Rust (linux)
+        if: matrix.target == 'linux'
+        shell: bash
+        working-directory: src/Core
+        run: |
+          cargo build --release
+          cd target/release
+          if [ -f libAnonymizer_Core.so ]; then
+            mv libAnonymizer_Core.so Anonymizer.Core.so
+          elif [ -f Anonymizer_Core.so ]; then
+            mv Anonymizer_Core.so Anonymizer.Core.so
+          else
+            echo "Unable to find Rust Linux shared library output"
+            exit 1
+          fi
+
+      - name: Build Rust (windows)
+        if: matrix.target == 'windows'
+        shell: pwsh
+        working-directory: src/Core
+        run: |
+          ./build.ps1
+
+      - name: Upload Rust artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ matrix.artifact_name }}
+          path: ${{ matrix.artifact_path }}
