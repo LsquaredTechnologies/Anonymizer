@@ -52,9 +52,9 @@ internal static class Application
 
         internal static class PII
         {
-            public static readonly string File = Join(Models.Path, "pii");
+            public static readonly string Path = Join(Models.Path, "pii");
 
-            public static DirectoryInfo Dir = new(File);
+            public static DirectoryInfo Dir = new(Path);
         }
 
         internal static class Face
@@ -62,43 +62,6 @@ internal static class Application
             public static readonly string Path = Join(Models.Path, "face");
 
             public static DirectoryInfo Dir = new(Path);
-        }
-    }
-
-    internal static class Scripts
-    {
-        public static readonly string Path = Join(Base.Path, "scripts")!;
-
-        public static readonly DirectoryInfo Dir = new(Path);
-
-        internal static class Anonymize
-        {
-            public static readonly string Path = Join(Scripts.Path, "anonymize.py");
-
-            public static readonly FileInfo File = new(Path);
-        }
-
-        internal static class DownloadModel
-        {
-            public static readonly string Path = Join(Scripts.Path, "download-model.py");
-
-            public static readonly FileInfo File = new(Path);
-        }
-    }
-
-    internal static class Tools
-    {
-        private static readonly string Extension = OperatingSystem.IsWindows() ? ".exe" : string.Empty;
-
-        public static readonly string Path = Join(Base.Path, "tools")!;
-
-        public static readonly DirectoryInfo Dir = new(Path);
-
-        internal static class UV
-        {
-            public static readonly string Path = Join(Tools.Path, ChangeExtension("uv", Extension));
-
-            public static FileInfo File = new(Path);
         }
     }
 
