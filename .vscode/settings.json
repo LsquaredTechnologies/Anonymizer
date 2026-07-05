@@ -1,0 +1,8 @@
+{
+  "cSpell.ignoreWords": [
+    "onnx"
+  ],
+  "files.associations": {
+    "launchsettings.json": "jsonc"
+  },
+}
