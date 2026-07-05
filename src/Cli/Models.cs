@@ -2,13 +2,21 @@ namespace Anonymizer.Cli;
 
 internal static class Models
 {
+    public static Uri BaseUri = new("https://github.com/LsquaredTechnologies/Anonymizer/releases/latest/download/");
+
     internal static class PII
     {
-        public const string Name = "yalen-ai/distilbert_pii_ner_yalen";
+        internal static class Model
+        {
+            public static readonly Uri RemoteUri = new(BaseUri, "pii_model.zip");
+        }
     }
 
     internal static class Face
     {
-        public static readonly Uri RemoteUri = new("https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB/raw/master/models/onnx/version-RFB-320.onnx");
+        internal static class Model
+        {
+            public static readonly Uri RemoteUri = new(BaseUri, "face_model.zip");
+        }
     }
 }

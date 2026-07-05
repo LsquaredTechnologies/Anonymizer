@@ -4,16 +4,15 @@ using Microsoft.Extensions.Logging;
 
 namespace Anonymizer.Cli.Downloaders;
 
-internal sealed partial class FaceModelDownloader(HttpClient http, ILogger<FaceModelDownloader> logger)
+internal sealed partial class ModelDownloader(HttpClient http, ILogger<ModelDownloader> logger)
 {
-    public async Task DownloadAsync(Uri remoteUri, DirectoryInfo outputDir, CancellationToken cancellationToken)
+    public async Task DownloadAsync(Uri remoteUri, FileInfo outputFile, CancellationToken cancellationToken)
     {
-        outputDir.Create();
+        outputFile.Directory?.Create();
 
-        FileInfo localFile = new(Path.Join(outputDir.FullName, Path.GetFileName(remoteUri.AbsolutePath)));
-        if (localFile.Exists)
+        if (outputFile.Exists)
         {
-            LogAlreadyExists(localFile.FullName);
+            LogAlreadyExists(outputFile.FullName);
             return;
         }
 
@@ -36,7 +35,7 @@ internal sealed partial class FaceModelDownloader(HttpClient http, ILogger<FaceM
             ProgressBar progress = new();
 
             await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
-            await using var output = localFile.Open(FileMode.Create, FileAccess.Write);
+            await using var output = outputFile.Open(FileMode.Create, FileAccess.Write);
 
             var buffer = new byte[81920];
             long totalRead = 0;
@@ -49,7 +48,7 @@ internal sealed partial class FaceModelDownloader(HttpClient http, ILogger<FaceM
             }
 
             progress.Finish();
-            LogSuccess(outputDir.FullName);
+            LogSuccess(outputFile.FullName);
         }
         catch (Exception ex)
         {
@@ -60,19 +59,19 @@ internal sealed partial class FaceModelDownloader(HttpClient http, ILogger<FaceM
 
 #pragma warning disable CA1822
 
-    [LoggerMessage(LogLevel.Information, "Face Detection ONNX model already exists at {Path}.")]
+    [LoggerMessage(LogLevel.Information, "ONNX model already exists at {Path}.")]
     private partial void LogAlreadyExists(string path);
 
-    [LoggerMessage(LogLevel.Information, "Downloading Face Detection ONNX model…")]
+    [LoggerMessage(LogLevel.Information, "Downloading ONNX model…")]
     private partial void LogStartDownload();
 
-    [LoggerMessage(LogLevel.Warning, "Unable to download Face Detection ONNX model.")]
+    [LoggerMessage(LogLevel.Warning, "Unable to download ONNX model.")]
     private partial void LogUnableToDownloadModel();
 
     [LoggerMessage(LogLevel.Information, "Model successfully downloaded to {Path}.")]
     private partial void LogSuccess(string path);
 
-    [LoggerMessage(LogLevel.Error, "Failed to download Face Detection model.")]
+    [LoggerMessage(LogLevel.Error, "Failed to download ONNX model.")]
     private partial void LogFailure(Exception exception);
 
 #pragma warning restore CA1822
