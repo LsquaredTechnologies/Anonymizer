@@ -4,7 +4,6 @@ using Anonymizer.Cli.Lifetime;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.VisualBasic;
 
 namespace Anonymizer.Cli.Commands;
 
