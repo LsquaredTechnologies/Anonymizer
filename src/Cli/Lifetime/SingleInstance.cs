@@ -4,10 +4,7 @@ namespace Anonymizer.Cli.Lifetime;
 
 internal static class SingleInstance
 {
-    /// <summary>
-    /// Returns true if this process is the only running instance.
-    /// </summary>
-    public static IDisposable TryAcquire(string name)
+    public static InstanceHandle TryAcquire(string name)
     {
         if (OperatingSystem.IsWindows()) return AcquireWindowsMutex(name);
         if (OperatingSystem.IsLinux()) return AcquireLinuxLockFile(name);
@@ -15,30 +12,36 @@ internal static class SingleInstance
     }
 
     [SupportedOSPlatform("Windows")]
-    private static IDisposable AcquireWindowsMutex(string name)
+    private static InstanceHandle AcquireWindowsMutex(string name)
     {
         try
         {
             Mutex mutex = new(
-                false,
+                true,
                 $"Global\\Anonymizer.{name}.Instance",
                 new() { CurrentUserOnly = true },
-                out var createdNew);
+                out bool createdNew);
 
-            return new Disposable(() =>
+            if (!createdNew)
+            {
+                mutex.Dispose();
+                return InstanceHandle.NotAcquired();
+            }
+
+            return InstanceHandle.Acquired(new Disposable(() =>
             {
                 mutex?.ReleaseMutex();
                 mutex?.Dispose();
-            });
+            }));
         }
         catch
         {
-            return new NoopDisposable();
+            return InstanceHandle.NotAcquired();
         }
     }
 
     [SupportedOSPlatform("Linux")]
-    private static IDisposable AcquireLinuxLockFile(string name)
+    private static InstanceHandle AcquireLinuxLockFile(string name)
     {
         try
         {
@@ -50,22 +53,33 @@ internal static class SingleInstance
                 FileAccess.ReadWrite,
                 FileShare.None);
 
-            return new Disposable(() =>
+            return InstanceHandle.Acquired(new Disposable(() =>
             {
                 stream.Dispose();
                 if (lockFile.Exists)
                     lockFile.Delete();
-            });
+            }));
         }
         catch (IOException)
         {
             // File is locked by another instance
-            return new NoopDisposable();
+            return InstanceHandle.NotAcquired();
         }
         catch
         {
-            return new NoopDisposable();
+            return InstanceHandle.NotAcquired();
         }
+    }
+
+    internal sealed class InstanceHandle(bool isAcquired, IDisposable releaser) : IDisposable
+    {
+        public bool IsAcquired { get; } = isAcquired;
+
+        public static InstanceHandle Acquired(IDisposable releaser) => new(true, releaser);
+
+        public static InstanceHandle NotAcquired() => new(false, new NoopDisposable());
+
+        public void Dispose() => releaser.Dispose();
     }
 
     private sealed class NoopDisposable : IDisposable
