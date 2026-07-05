@@ -31,10 +31,6 @@ internal sealed class DownloadCommand : Command
         if (modelsRoot is null)
             throw new InvalidOperationException("Unable to resolve models root directory.");
 
-        outputDir.Refresh();
-        if (outputDir.Exists)
-            outputDir.Delete(true);
-
         string tempDirPath = Path.Combine(Path.GetTempPath(), "anonymizer-models");
         Directory.CreateDirectory(tempDirPath);
 
