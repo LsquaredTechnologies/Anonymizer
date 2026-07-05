@@ -8,7 +8,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-Console.OutputEncoding = System.Text.Encoding.UTF8;
+using static Anonymizer.Cli.Internals.ConsoleA;
+
+AttachToConsole();
+Console.OutputEncoding = Console.InputEncoding = System.Text.Encoding.UTF8;
 
 var builder = Host.CreateDefaultBuilder();
 builder.ConfigureServices((context, services) =>
