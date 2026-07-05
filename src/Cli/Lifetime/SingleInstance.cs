@@ -16,12 +16,7 @@ internal static class SingleInstance
     {
         try
         {
-            Mutex mutex = new(
-                true,
-                $"Global\\Anonymizer.{name}.Instance",
-                new() { CurrentUserOnly = true },
-                out bool createdNew);
-
+            Mutex mutex = new(true, $"Anonymizer.{name}.Instance", out bool createdNew);
             if (!createdNew)
             {
                 mutex.Dispose();
@@ -30,11 +25,11 @@ internal static class SingleInstance
 
             return InstanceHandle.Acquired(new Disposable(() =>
             {
-                mutex?.ReleaseMutex();
-                mutex?.Dispose();
+                mutex.ReleaseMutex();
+                mutex.Dispose();
             }));
         }
-        catch
+        catch (Exception)
         {
             return InstanceHandle.NotAcquired();
         }
