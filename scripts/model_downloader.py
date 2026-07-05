@@ -1,5 +1,5 @@
 from pathlib import Path
-from transformers import AutoTokenizer, AutoModelForTokenClassification
+from transformers import AutoTokenizer
 from optimum.onnxruntime import ORTModelForTokenClassification
 
 
@@ -14,11 +14,12 @@ class ModelDownloader:
         tokenizer.save_pretrained(self.output_dir)
 
     def try_download_onnx(self):
+        """Tente de télécharger un modèle déjà exporté en ONNX sur le Hub."""
         try:
             model = ORTModelForTokenClassification.from_pretrained(
                 self.model_id,
                 export=False,
-                local_files_only=False
+                local_files_only=False,
             )
             model.save_pretrained(self.output_dir)
             return True
@@ -26,16 +27,14 @@ class ModelDownloader:
             return False
 
     def export_pytorch_to_onnx(self):
-        tokenizer = AutoTokenizer.from_pretrained(self.model_id)
+        """Exporte depuis PyTorch si aucun ONNX n'est disponible sur le Hub."""
+        # from_transformers est déprécié depuis Optimum 1.14 — export=True suffit
         ORTModelForTokenClassification.from_pretrained(
             self.model_id,
-            from_transformers=True,
             export=True,
-            tokenizer=tokenizer,
-            save_dir=self.output_dir
-        )
+        ).save_pretrained(self.output_dir)
 
-    def run(self):
+    def run(self) -> str:
         self.download_tokenizer()
 
         if self.try_download_onnx():

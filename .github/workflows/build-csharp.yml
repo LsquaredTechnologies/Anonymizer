@@ -1,0 +1,112 @@
+name: Build CSharp
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: false
+        type: string
+      use_rust_artifacts:
+        required: false
+        type: boolean
+        default: true
+
+jobs:
+  build-csharp:
+    name: Build C# (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - target: linux
+            os: ubuntu-latest
+            rid: linux-x64
+            ext: ""
+            prefix: linux
+            rust_artifact: rust-core-linux
+          - target: windows
+            os: windows-latest
+            rid: win-x64
+            ext: .exe
+            prefix: win
+            rust_artifact: rust-core-windows
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Download Rust artifact (${{ matrix.target }})
+        if: inputs.use_rust_artifacts
+        uses: actions/download-artifact@v8
+        with:
+          name: ${{ matrix.rust_artifact }}
+          path: src/Core/target/release
+
+      - name: Compute version
+        id: version
+        shell: bash
+        run: |
+          TAG="${{ inputs.tag || '' }}"
+          if [ -z "$TAG" ]; then
+            echo "version=0.0.0" >> $GITHUB_OUTPUT
+          else
+            CLEAN="${TAG#v}"
+            echo "version=$CLEAN" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build .Net (${{ matrix.target }})
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          dotnet publish \
+            src/Cli \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            -p:Version=$VERSION \
+            -o artifacts/${{ matrix.prefix }}
+
+      - name: Create setup-linux.zip
+        if: github.event_name != 'pull_request' && matrix.target == 'linux'
+        shell: bash
+        run: |
+          cd artifacts/${{ matrix.prefix }}
+          zip -r payload.zip appsettings.json Anonymizer.Core.so libonnxruntime.so libonnxruntime_providers_shared.so
+
+      - name: Create setup-win.zip
+        if: github.event_name != 'pull_request' && matrix.target == 'windows'
+        shell: pwsh
+        run: |
+          Set-Location "artifacts/${{ matrix.prefix }}"
+          $items = @(
+            "appsettings.json"
+            "Anonymizer.Core.dll",
+            "onnxruntime.dll",
+            "onnxruntime_providers_shared.dll")
+          Compress-Archive -Path $items -DestinationPath payload.zip -CompressionLevel Optimal -Force
+
+      - name: Create setup (${{ matrix.target }})
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          cd artifacts/${{ matrix.prefix }}
+          MAGIC="SETUP-PAYLOAD"
+          PAYLOAD_SIZE=$(stat -c%s payload.zip)
+          cp anonymizer${{ matrix.ext }} setup${{ matrix.ext }}
+          cat payload.zip >> setup${{ matrix.ext }}
+          printf "%s" "$MAGIC" | iconv -f ASCII -t ASCII >> setup${{ matrix.ext }}
+          python3 - <<EOF
+          import struct
+          size = $PAYLOAD_SIZE
+          with open("setup${{ matrix.ext }}", "ab") as f:
+              f.write(struct.pack("<Q", size))
+          EOF
+          cp setup${{ matrix.ext }} ../
+
+      - name: Upload setup (${{ matrix.target }})
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v7
+        with:
+          name: setup-${{ matrix.prefix }}
+          path: artifacts/setup${{ matrix.ext }}

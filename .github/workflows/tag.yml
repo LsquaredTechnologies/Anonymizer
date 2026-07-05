@@ -43,7 +43,7 @@ jobs:
           git push origin "v${{ steps.semver.outputs.majorMinorPatch }}"
 
       - name: Trigger release workflow
-        uses: benc-uk/workflow-dispatch@v1
+        uses: benc-uk/workflow-dispatch@v1.3.2
         with:
           workflow: release.yml
           ref: main
