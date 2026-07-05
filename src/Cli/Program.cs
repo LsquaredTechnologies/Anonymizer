@@ -13,8 +13,7 @@ Console.OutputEncoding = System.Text.Encoding.UTF8;
 var builder = Host.CreateDefaultBuilder();
 builder.ConfigureServices((context, services) =>
 {
-    services.AddSingleton<PIIModelDownloader>();
-    services.AddHttpClient<FaceModelDownloader>();
+    services.AddHttpClient<ModelDownloader>();
     services.AddSingleton<AnonymizerService>();
 
     if (Path.GetFileNameWithoutExtension(Environment.ProcessPath) is "setup")
