@@ -26,9 +26,8 @@ internal sealed class RootCommand : System.CommandLine.RootCommand
             {
                 Add(new InstallCommand(builder));
                 Add(new UninstallCommand(builder));
+                Add(new UpdateCommand());
             }
-
-            Add(new UpdateCommand());
         }
 
         TreatUnmatchedTokensAsErrors = true;
