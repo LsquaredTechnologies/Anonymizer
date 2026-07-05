@@ -58,6 +58,7 @@ internal sealed partial class FilesWatcher : BackgroundService
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Only register for process termination!
         stoppingToken.Register(() => _tcs.TrySetResult());
         return Task.CompletedTask;
     }
@@ -73,21 +74,20 @@ internal sealed partial class FilesWatcher : BackgroundService
             EnableRaisingEvents = true,
         };
         _watcher.Created += async (_, e) =>
-            _ = Task.Run(async () =>
+        {
+            try
             {
-                try
-                {
-                    await Task.Delay(200, cancellationToken);
+                await Task.Delay(200, cancellationToken);
 
-                    LogFileFound(e.FullPath);
-                    FileInfo file = new(e.FullPath);
-                    _ = Task.Run(() => _anonymizer.AnonymizeFileAsync(file, cancellationToken), cancellationToken);
-                }
-                catch (Exception ex)
-                {
-                    LogErrorWhileProcessing(ex, e.FullPath);
-                }
-            });
+                LogFileFound(e.FullPath);
+                FileInfo file = new(e.FullPath);
+                await _anonymizer.AnonymizeFileAsync(file, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                LogErrorWhileProcessing(ex, e.FullPath);
+            }
+        };
     }
 
 #pragma warning disable CA1822
