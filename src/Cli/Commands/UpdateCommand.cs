@@ -53,22 +53,19 @@ internal sealed class UpdateCommand : Command
 
         ProcessManager.KillRunningInstances();
 
-        string setupName = OperatingSystem.IsWindows() ? "setup.exe" : "setup";
-        string releaseUrl =
-            $"https://github.com/LsquaredTechnologies/Anonymizer/releases/latest/download/{setupName}";
-
         string tempPath = Path.Combine(Path.GetTempPath(), "anonymizer-update");
         DirectoryInfo tempDir = new(tempPath);
         if (tempDir.Exists)
             tempDir.Delete(recursive: true);
         tempDir.Create();
 
+        string setupName = OperatingSystem.IsWindows() ? "setup.exe" : "setup";
+        Uri releaseSetupUri = new(Models.BaseUri, setupName);
         FileInfo downloadedSetup = new(Path.Combine(tempPath, setupName));
-
-        Console.WriteLine($"Downloading: {releaseUrl}");
+        Console.WriteLine($"Downloading: {releaseSetupUri}");
 
         using (var http = new HttpClient())
-        using (var stream = await http.GetStreamAsync(releaseUrl))
+        using (var stream = await http.GetStreamAsync(releaseSetupUri))
         using (var file = downloadedSetup.Open(FileMode.Create, FileAccess.Write))
             await stream.CopyToAsync(file);
 
