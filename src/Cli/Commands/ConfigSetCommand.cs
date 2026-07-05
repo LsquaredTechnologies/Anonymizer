@@ -1,6 +1,6 @@
 using System.CommandLine;
 using System.Text.Json;
-using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,12 +40,17 @@ internal sealed class ConfigSetCommand : Command
 
             if (!Application.Config.ValidConfigKey.Contains(key)) return;
 
-            JsonObject o = new()
+            Dictionary<string, string> o = new()
             {
-                { key, value }
+                [key] = value,
             };
             using var stream = File.Open(Application.AppSettings.Path, FileMode.Create, FileAccess.Write);
-            await JsonSerializer.SerializeAsync(stream, o, Defaults.JsonOptions);
+            await JsonSerializer.SerializeAsync(stream, o, ConfigJsonContext.Default.DictionaryStringString);
         });
     }
+}
+
+[JsonSerializable(typeof(Dictionary<string, string>))]
+internal partial class ConfigJsonContext : JsonSerializerContext
+{
 }

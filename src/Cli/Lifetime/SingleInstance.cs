@@ -1,7 +1,4 @@
 using System.Runtime.Versioning;
-using System.Security.AccessControl;
-using System.Security.Cryptography;
-using System.Security.Principal;
 
 namespace Anonymizer.Cli.Lifetime;
 
