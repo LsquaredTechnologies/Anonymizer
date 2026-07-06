@@ -9,13 +9,6 @@ internal sealed partial class ModelDownloader(HttpClient http, ILogger<ModelDown
     public async Task DownloadAsync(Uri remoteUri, FileInfo outputFile, CancellationToken cancellationToken)
     {
         outputFile.Directory?.Create();
-
-        if (outputFile.Exists)
-        {
-            LogAlreadyExists(outputFile.FullName);
-            return;
-        }
-
         try
         {
             LogStartDownload();
@@ -35,7 +28,7 @@ internal sealed partial class ModelDownloader(HttpClient http, ILogger<ModelDown
             ProgressBar progress = new();
 
             await using var input = await response.Content.ReadAsStreamAsync(cancellationToken);
-            await using var output = outputFile.Open(FileMode.Create, FileAccess.Write);
+            await using var output = outputFile.Open(FileMode.Create, FileAccess.Write, FileShare.Read);
 
             var buffer = new byte[81920];
             long totalRead = 0;
@@ -48,7 +41,6 @@ internal sealed partial class ModelDownloader(HttpClient http, ILogger<ModelDown
             }
 
             progress.Finish();
-            LogSuccess(outputFile.FullName);
         }
         catch (Exception ex)
         {
@@ -67,9 +59,6 @@ internal sealed partial class ModelDownloader(HttpClient http, ILogger<ModelDown
 
     [LoggerMessage(LogLevel.Warning, "Unable to download ONNX model.")]
     private partial void LogUnableToDownloadModel();
-
-    [LoggerMessage(LogLevel.Information, "Model successfully downloaded to {Path}.")]
-    private partial void LogSuccess(string path);
 
     [LoggerMessage(LogLevel.Error, "Failed to download ONNX model.")]
     private partial void LogFailure(Exception exception);
