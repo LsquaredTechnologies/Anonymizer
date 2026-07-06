@@ -19,6 +19,10 @@ builder.ConfigureServices((context, services) =>
 {
     services.AddHttpClient<ModelDownloader>();
     services.AddSingleton<AnonymizerService>();
+    services.AddSingleton<ProcessManager>();
+
+    if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux())
+        services.AddSingleton<SetupLifecycleService>();
 
     if (Path.GetFileNameWithoutExtension(Environment.ProcessPath) is "setup")
     {
