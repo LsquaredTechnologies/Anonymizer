@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Console;
 
 using static Anonymizer.Cli.Internals.ConsoleA;
 
@@ -32,13 +33,12 @@ builder.ConfigureAppConfiguration((config) =>
 builder.ConfigureLogging((builder) =>
 {
     builder.ClearProviders();
-    builder.AddFilter((category, level) => category?.StartsWith("Microsoft.") is false || level >= LogLevel.Error);
-    builder.AddSimpleConsole((options) =>
-    {
-        options.SingleLine = true;
-        options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] ";
-        options.IncludeScopes = false;
-    });
+    builder.SetMinimumLevel(LogLevel.Information);
+    builder.AddFilter("Microsoft", (level) => level >= LogLevel.Warning);
+    builder.AddFilter("System", (level) => level >= LogLevel.Warning);
+    builder.AddConsole((options) =>
+        options.FormatterName = CustomConsoleFormatter.FormatterName);
+    builder.Services.AddSingleton<ConsoleFormatter, CustomConsoleFormatter>();
 });
 
 RootCommand root = new(builder);
