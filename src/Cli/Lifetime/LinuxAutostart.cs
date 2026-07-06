@@ -17,11 +17,12 @@ internal sealed class LinuxAutostart : IAutostartManager
     {
         if (enable)
         {
+            string executablePath = Path.Combine(Application.Install.Path, "anonymizer");
             var content = $"""
                 [Desktop Entry]
                 Type=Application
                 Name={Application.Name}
-                Exec={Application.Path}
+                Exec={executablePath} start
                 Hidden=false
                 """;
             File.WriteAllText(_desktopFilePath, content);
