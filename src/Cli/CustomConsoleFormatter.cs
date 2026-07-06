@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Logging.Console;
 
-namespace Anonymizer.Cli;
+namespace Anonymizer;
 
 internal sealed class CustomConsoleFormatter() : ConsoleFormatter(FormatterName)
 {

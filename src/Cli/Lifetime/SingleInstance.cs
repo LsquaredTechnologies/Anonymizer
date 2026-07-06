@@ -1,6 +1,6 @@
 using System.Runtime.Versioning;
 
-namespace Anonymizer.Cli.Lifetime;
+namespace Anonymizer.Lifetime;
 
 internal static class SingleInstance
 {

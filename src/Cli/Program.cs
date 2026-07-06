@@ -1,7 +1,7 @@
-using Anonymizer.Cli;
-using Anonymizer.Cli.Commands;
-using Anonymizer.Cli.Downloaders;
-using Anonymizer.Cli.Lifetime;
+using Anonymizer;
+using Anonymizer.Commands;
+using Anonymizer.Downloaders;
+using Anonymizer.Lifetime;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Console;
 
-using static Anonymizer.Cli.Internals.ConsoleA;
+using static Anonymizer.Internals.ConsoleA;
 
 AttachToConsole();
 Console.OutputEncoding = Console.InputEncoding = System.Text.Encoding.UTF8;

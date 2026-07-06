@@ -1,4 +1,4 @@
-namespace Anonymizer.Cli.Lifetime;
+namespace Anonymizer.Lifetime;
 
 internal interface IAutostartManager
 {

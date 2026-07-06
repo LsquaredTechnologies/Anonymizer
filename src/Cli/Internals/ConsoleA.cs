@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Anonymizer.Cli.Internals;
+namespace Anonymizer.Internals;
 
 internal static partial class ConsoleA
 {

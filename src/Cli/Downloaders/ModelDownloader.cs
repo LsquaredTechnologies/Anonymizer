@@ -1,8 +1,8 @@
-using Anonymizer.Cli.Internals;
+using Anonymizer.Internals;
 
 using Microsoft.Extensions.Logging;
 
-namespace Anonymizer.Cli.Downloaders;
+namespace Anonymizer.Downloaders;
 
 internal sealed partial class ModelDownloader(HttpClient http, ILogger<ModelDownloader> logger)
 {

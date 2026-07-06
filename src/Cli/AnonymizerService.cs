@@ -1,8 +1,8 @@
-using Anonymizer.Cli.Core;
+using Anonymizer.Core;
 
 using Microsoft.Extensions.Logging;
 
-namespace Anonymizer.Cli;
+namespace Anonymizer;
 
 internal sealed partial class AnonymizerService(ILogger<AnonymizerService> logger)
 {

@@ -2,7 +2,7 @@ using System.Diagnostics;
 
 using Microsoft.Extensions.Logging;
 
-namespace Anonymizer.Cli.Lifetime;
+namespace Anonymizer.Lifetime;
 
 internal sealed partial class ProcessManager(ILogger<ProcessManager> logger)
 {

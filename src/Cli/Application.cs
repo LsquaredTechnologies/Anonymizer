@@ -3,7 +3,7 @@ using System.Runtime.Versioning;
 
 using static System.IO.Path;
 
-namespace Anonymizer.Cli;
+namespace Anonymizer;
 
 internal static class Application
 {

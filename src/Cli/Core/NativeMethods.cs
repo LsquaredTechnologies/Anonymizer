@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Anonymizer.Cli.Core;
+namespace Anonymizer.Core;
 
 internal static unsafe partial class NativeMethods
 {

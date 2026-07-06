@@ -7,7 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <RootNamespace>Anonymizer.Cli</RootNamespace>
+    <RootNamespace>Anonymizer</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup Label="AOT">

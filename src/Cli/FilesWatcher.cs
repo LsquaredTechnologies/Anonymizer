@@ -2,7 +2,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace Anonymizer.Cli;
+namespace Anonymizer;
 
 internal sealed partial class FilesWatcher : BackgroundService
 {

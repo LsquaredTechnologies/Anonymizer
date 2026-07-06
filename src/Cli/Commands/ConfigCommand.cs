@@ -2,7 +2,7 @@ using System.CommandLine;
 
 using Microsoft.Extensions.Hosting;
 
-namespace Anonymizer.Cli.Commands;
+namespace Anonymizer.Commands;
 
 internal sealed class ConfigCommand : Command
 {

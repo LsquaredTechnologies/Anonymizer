@@ -1,6 +1,6 @@
 using System.CommandLine;
 
-namespace Anonymizer.Cli.Commands;
+namespace Anonymizer.Commands;
 
 internal sealed class InputArgument : Argument<FileSystemInfo[]>
 {
