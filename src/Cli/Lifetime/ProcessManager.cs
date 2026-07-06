@@ -8,17 +8,26 @@ internal sealed partial class ProcessManager(ILogger<ProcessManager> logger)
 {
     public void KillRunningInstances()
     {
-        foreach (var process in Process.GetProcessesByName(Application.Name))
+        string[] processNames =
+        [
+            Application.Name,
+            "anonymizerw",
+        ];
+
+        foreach (string processName in processNames.Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            try
+            foreach (var process in Process.GetProcessesByName(processName))
             {
-                LogStoppingProcess(process.Id);
-                process.Kill(entireProcessTree: true);
-                process.WaitForExit(5000);
-            }
-            catch (Exception ex)
-            {
-                LogFailedToStopProcess(ex, process.Id);
+                try
+                {
+                    LogStoppingProcess(process.Id);
+                    process.Kill(entireProcessTree: true);
+                    process.WaitForExit(5000);
+                }
+                catch (Exception ex)
+                {
+                    LogFailedToStopProcess(ex, process.Id);
+                }
             }
         }
     }

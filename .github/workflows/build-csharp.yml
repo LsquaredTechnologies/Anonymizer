@@ -67,6 +67,18 @@ jobs:
             -p:Version=$VERSION \
             -o artifacts/${{ matrix.prefix }}
 
+      - name: Build .Net (${{ matrix.target }})
+        if: matrix.target == 'windows'
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          dotnet publish \
+            src/Win \
+            -c Release \
+            -r ${{ matrix.rid }} \
+            -p:Version=$VERSION \
+            -o artifacts/${{ matrix.prefix }}
+
       - name: Create setup-linux.zip
         if: github.event_name != 'pull_request' && matrix.target == 'linux'
         shell: bash
@@ -80,7 +92,8 @@ jobs:
         run: |
           Set-Location "artifacts/${{ matrix.prefix }}"
           $items = @(
-            "appsettings.json"
+            "appsettings.json",
+            "anonymizerw.exe",
             "Anonymizer.Core.dll",
             "onnxruntime.dll",
             "onnxruntime_providers_shared.dll")

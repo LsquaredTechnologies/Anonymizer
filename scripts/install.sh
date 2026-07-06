@@ -6,7 +6,7 @@ VERSION="${1:-latest}"
 OWNER="LsquaredTechnologies"
 REPO="Anonymizer"
 
-echo "🔍 Detecting OS: $OS"
+echo "🔍 Detecting OS..."
 UNAME="$(uname -s | tr '[:upper:]' '[:lower:]')"
 case "$UNAME" in
     linux*)
@@ -19,7 +19,7 @@ case "$UNAME" in
         OS="windows"
         INSTALL_DIR="${LOCALAPPDATA}/anonymizer"
         BINARY_NAME="setup.exe"
-        ANON_NAME="anonymizer.exe"
+        ANON_NAME="anonymizerw.exe"
         ;;
     *)
         echo "❌ Unsupported OS: $UNAME"
@@ -58,8 +58,9 @@ fi
 echo "⚙️  Running installer..."
 "$SETUP" install
 
-echo "📥 Downloading models..."
-"$SETUP" download
-
 echo "🚀 Launching Anonymizer..."
-nohup "$ANON" start >/dev/null 2>&1 &
+if [ "$OS" = "windows" ]; then
+    nohup "$ANON" >/dev/null 2>&1 &
+else
+    nohup "$ANON" start >/dev/null 2>&1 &
+fi
