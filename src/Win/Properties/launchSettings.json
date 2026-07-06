@@ -1,0 +1,10 @@
+{
+    "profiles": {
+        "cli": {
+            "commandName": "Project",
+            "commandLineArgs": "start",
+            "dotnetRunMessages": false,
+            "workingDirectory": "."
+        }
+    }
+}

@@ -18,7 +18,10 @@ internal sealed class RootCommand : System.CommandLine.RootCommand
         Add(new DownloadCommand(builder));
         Add(new RunCommand(builder));
         Add(new ConfigCommand(builder));
+
+#if LINUX
         Add(new StartCommand(builder));
+#endif
 
         if (OperatingSystem.IsWindows() || OperatingSystem.IsLinux())
         {

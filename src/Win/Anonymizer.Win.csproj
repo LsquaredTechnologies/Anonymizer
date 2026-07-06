@@ -1,0 +1,42 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AssemblyName>anonymizerw</AssemblyName>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Anonymizer</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Label="AOT">
+    <PublishAot>true</PublishAot>
+    <StripSymbols>true</StripSymbols>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <IlcOptimizationPreference>Speed</IlcOptimizationPreference>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Trimming">
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../Cli/Commands/StartCommand.Execute.cs" />
+    <Compile Include="../Cli/Core/NativeMethods.cs" />
+    <Compile Include="../Cli/Internals/ConsoleA.cs" />
+    <Compile Include="../Cli/Lifetime/SingleInstance.cs" />
+    <Compile Include="../Cli/AnonymizerService.cs" />
+    <Compile Include="../Cli/Application.cs" />
+    <Compile Include="../Cli/FilesWatcher.cs" />
+    <Compile Include="../Cli/FilesWatcherOptions.cs" />
+    <Compile Include="../Cli/CustomConsoleFormatter.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.9" />
+  </ItemGroup>
+
+</Project>

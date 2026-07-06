@@ -10,7 +10,7 @@ It runs as a lightweight daemon on Windows and Linux, with a unified installer a
 - Cross‑platform (Windows, Linux)
 - Unified installer (Pwsh, Bash)
 - Automatic OS detection
-- Automatic service installation
+- Automatic background start
 - Self‑contained setup bundles (setup.zip)
 - Semantic Versioning powered by git-cliff
 - GitHub Actions automated release pipeline
@@ -35,13 +35,12 @@ curl -sL https://github.com/LsquaredTechnologies/Anonymizer/releases/latest/down
 The installer will automatically:
 
 - Detect Windows or Linux (WSL)
-- Download win/setup.zip
-- Extract it into %LOCALAPPDATA%/anonymizer
+- Download setup.exe
+- Copy it into %LOCALAPPDATA%/anonymizer
 - Run:
 
   ```pwsh
-  setup.exe install anonymizer
-  setup.exe service install anonymizer
+  setup.exe install
   ```
 
 ### Linux
@@ -52,36 +51,23 @@ Bash
 curl -sL https://github.com/LsquaredTechnologies/Anonymizer/releases/latest/download/install.sh | bash
 ```
 
-Zsh
-
-```zsh
-curl -sL https://github.com/LsquaredTechnologies/Anonymizer/releases/latest/download/install.zsh | zsh
-```
-
 The installer will automatically:
 
 - Detect Linux (including WSL)
-- Download linux/setup.zip
-- Extract it into ~/.local/share/anonymizer
+- Download setup
+- Copy it into ~/.local/share/anonymizer
 - Run:
 
   ```shell
-  ./anonymizer install anonymizer
-  ./anonymizer service install anonymizer
+  ./setup install
   ```
 
 ## 🛠️ Debugging
 
-### Check service status
-
-```shell
-anonymizer status
-```
-
 ### Run in foreground (debug mode)
 
 ```shell
-anonymizer run --verbose
+anonymizer run <pdf-file-or-directory>
 ```
 
 ### View logs
@@ -108,25 +94,23 @@ curl -sL https://github.com/LsquaredTechnologies/Anonymizer/releases/latest/down
 
 The installer will automatically:
 
-- Download the latest setup.zip
+- Download the latest setup binary
 - Replace binaries
-- Restart the service
+- Restart the background process
 
 ## ❌ Uninstalling
 
 ### Linux
 
 ```shell
-anonymizer service uninstall
-anonymizer uninstall
+setup uninstall
 rm -rf ~/.local/share/anonymizer
 ```
 
 ### Windows
 
 ```pwsh
-setup.exe service uninstall anonymizer
-setup.exe uninstall anonymizer
+setup.exe uninstall
 Remove-Item "$env:LOCALAPPDATA\anonymizer" -Recurse -Force
 ```
 
@@ -139,12 +123,8 @@ Remove-Item "$env:LOCALAPPDATA\anonymizer" -Recurse -Force
 │   ├── install.ps1
 │   └── install.sh
 └── src/
-    └── Anonymizer.Cli/
-        └── scripts
-            ├── anonymizer.py
-            ├── download_model.py
-            ├── downloader.py
-            └── face_detector.py
+    ├── Anonymizer.Cli/
+    └── Anonymizer.Win/
 ```
 
 ## 🧪 Development
@@ -158,13 +138,13 @@ dotnet build
 ### Run
 
 ```shell
-dotnet run --project src/Anonymizer
+dotnet run --project src/Cli -- run <pdf-file-or-directory>
 ```
 
-### Run service locally
+### Run background watcher locally
 
 ```shell
-dotnet run --project src/Anonymizer.Service
+dotnet run --project src/Win
 ```
 
 ## 🚀 Release Workflow

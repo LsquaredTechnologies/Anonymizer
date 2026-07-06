@@ -10,15 +10,15 @@ $Repo  = "Anonymizer"
 Write-Host "Detecting OS..."
 if ($PSVersionTable.OS -match "Linux") {
     $OS = "linux"
-    $Suffix = ""
     $InstallDir = "$HOME/.local/share/anonymizer"
     $BinaryName = "setup"
+    $AnonName = Join-Path $InstallDir "anonymizer"
 }
 else {
     $OS = "windows"
-    $Suffix = ".exe"
     $InstallDir = Join-Path $env:LOCALAPPDATA "anonymizer"
     $BinaryName = "setup.exe"
+    $AnonName = Join-Path $InstallDir "anonymizerw.exe"
 }
 
 if ($Version -eq "latest") {
@@ -53,8 +53,6 @@ if ($OS -eq "linux") {
     chmod +x $FinalSetup
 }
 
-$AnonCmd = Join-Path $InstallDir ("anonymizer" + $Suffix)
-
 $running = Get-Process | Where-Object { $_.ProcessName -like "anonymizer*" } 2>$null
 if ($running) {
     Write-Host "Stopping running instance..."
@@ -64,8 +62,11 @@ if ($running) {
 Write-Host "Running installer..."
 & $FinalSetup install
 
-Write-Host "Downloading models..."
-& $FinalSetup download
-
 Write-Host "Launching Anonymizer..."
-Start-Process $AnonCmd -ArgumentList "start" -WindowStyle Hidden
+if ($OS -eq "windows") {
+    Start-Process "cmd.exe" -ArgumentList "/c start `"`" /b anonymizerw"
+}
+else {
+    chmod +x $AnonName
+    Start-Process $AnonName -ArgumentList "start" -WindowStyle Hidden
+}
