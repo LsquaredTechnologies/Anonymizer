@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace Anonymizer.Cli.Internals;
+namespace Anonymizer.Internals;
 
 internal sealed class ProgressBar(int width = 30)
 {

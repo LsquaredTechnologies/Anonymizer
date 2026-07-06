@@ -1,4 +1,4 @@
-namespace Anonymizer.Cli;
+namespace Anonymizer;
 
 internal static class Models
 {

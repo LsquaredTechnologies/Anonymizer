@@ -1,12 +1,12 @@
 using System.CommandLine;
 using System.IO.Compression;
 
-using Anonymizer.Cli.Downloaders;
+using Anonymizer.Downloaders;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Anonymizer.Cli.Commands;
+namespace Anonymizer.Commands;
 
 internal sealed partial class DownloadCommand : Command
 {

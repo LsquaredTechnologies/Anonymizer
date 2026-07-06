@@ -2,9 +2,11 @@ using System.Diagnostics;
 using System.IO.Compression;
 using System.Runtime.Versioning;
 
+using Anonymizer.Lifetime;
+
 using Microsoft.Extensions.Logging;
 
-namespace Anonymizer.Cli.Lifetime;
+namespace Anonymizer.Lifetime;
 
 [SupportedOSPlatform("Linux")]
 [SupportedOSPlatform("Windows")]

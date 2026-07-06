@@ -1,12 +1,12 @@
 using System.CommandLine;
 using System.Runtime.Versioning;
 
-using Anonymizer.Cli.Lifetime;
+using Anonymizer.Lifetime;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Anonymizer.Cli.Commands;
+namespace Anonymizer.Commands;
 
 [SupportedOSPlatform("Linux")]
 [SupportedOSPlatform("Windows")]

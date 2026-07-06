@@ -3,7 +3,7 @@ using System.CommandLine;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Anonymizer.Cli.Commands;
+namespace Anonymizer.Commands;
 
 internal sealed class RunCommand : Command
 {

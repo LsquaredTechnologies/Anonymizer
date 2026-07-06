@@ -2,7 +2,7 @@ using System.Runtime.Versioning;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Anonymizer.Cli.Lifetime;
+namespace Anonymizer.Lifetime;
 
 [SupportedOSPlatform("Linux")]
 [SupportedOSPlatform("Windows")]

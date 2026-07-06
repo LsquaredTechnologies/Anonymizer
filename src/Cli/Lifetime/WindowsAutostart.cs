@@ -2,7 +2,7 @@ using System.Runtime.Versioning;
 
 using Microsoft.Win32;
 
-namespace Anonymizer.Cli.Lifetime;
+namespace Anonymizer.Lifetime;
 
 [SupportedOSPlatform("Windows")]
 internal sealed class WindowsAutostart : IAutostartManager

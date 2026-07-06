@@ -1,11 +1,11 @@
 using System.CommandLine;
 
-using Anonymizer.Cli.Lifetime;
+using Anonymizer.Lifetime;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
-namespace Anonymizer.Cli.Commands;
+namespace Anonymizer.Commands;
 
 internal sealed class StartCommand : Command
 {
