@@ -27,6 +27,7 @@ internal sealed class ProgressBar(int width = 30)
         string speedStr = $"{FormatBytes(speed)}/s".PadLeft(10);
         string etaStr = TimeSpan.FromSeconds(eta).ToString(@"hh\:mm\:ss");
 
+        Console.CursorVisible = false;
         Console.CursorLeft = 0;
         Console.ForegroundColor = ConsoleColor.Cyan;
         Console.Write("▕");
@@ -43,8 +44,7 @@ internal sealed class ProgressBar(int width = 30)
         _ = this;
         Console.CursorLeft = 0;
         Console.WriteLine();
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine("✔ Download complete.");
+        Console.CursorVisible = true;
         Console.ResetColor();
     }
 

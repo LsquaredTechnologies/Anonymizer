@@ -8,7 +8,7 @@ using Microsoft.Extensions.Hosting;
 
 namespace Anonymizer.Cli.Commands;
 
-internal sealed class DownloadCommand : Command
+internal sealed partial class DownloadCommand : Command
 {
     private const string HelpDesc = """
         Download PII NER and face-recognition models.
@@ -20,16 +20,13 @@ internal sealed class DownloadCommand : Command
             var app = builder.Build();
 
             var modelDownloader = app.Services.GetRequiredService<ModelDownloader>();
-            var piiModelTask = DownloadAndUncompress(modelDownloader, Models.PII.Model.RemoteUri, Application.Models.PII.Dir, cancellationToken);
-            var faceModelTask = DownloadAndUncompress(modelDownloader, Models.Face.Model.RemoteUri, Application.Models.Face.Dir, cancellationToken);
-            await Task.WhenAll(piiModelTask, faceModelTask);
+            await DownloadAndUncompress(modelDownloader, Models.Face.Model.RemoteUri, Application.Models.Face.Dir, cancellationToken);
+            await DownloadAndUncompress(modelDownloader, Models.PII.Model.RemoteUri, Application.Models.PII.Dir, cancellationToken);
         });
 
     private static async Task DownloadAndUncompress(ModelDownloader modelDownloader, Uri remoteUri, DirectoryInfo outputDir, CancellationToken cancellationToken)
     {
-        DirectoryInfo? modelsRoot = outputDir.Parent;
-        if (modelsRoot is null)
-            throw new InvalidOperationException("Unable to resolve models root directory.");
+        outputDir.Create();
 
         string tempDirPath = Path.Combine(Path.GetTempPath(), "anonymizer-models");
         Directory.CreateDirectory(tempDirPath);
@@ -42,7 +39,7 @@ internal sealed class DownloadCommand : Command
         try
         {
             await modelDownloader.DownloadAsync(remoteUri, archiveFile, cancellationToken);
-            ZipFile.ExtractToDirectory(archiveFile.FullName, modelsRoot.FullName, overwriteFiles: true);
+            ZipFile.ExtractToDirectory(archiveFile.FullName, outputDir.FullName, overwriteFiles: true);
         }
         finally
         {
@@ -74,4 +71,3 @@ internal sealed class DownloadCommand : Command
         }
     }
 }
-
