@@ -49,7 +49,6 @@ internal sealed partial class AnonymizerService(ILogger<AnonymizerService> logge
         OutputPaths output = OutputPaths.From(file);
         await Task.Run(() =>
         {
-            Console.WriteLine("[DEBUG] Avant RunPipeline()");
             var result = NativeMethods.RedactPdf(file.FullName, ResolveModelsDirectory().FullName, output.AnonymizedPdfPath);
             var error = result switch
             {
@@ -64,7 +63,6 @@ internal sealed partial class AnonymizerService(ILogger<AnonymizerService> logge
                 LogProcessError(file.FullName, error);
             else
                 LogProcessTerminated(file.FullName);
-            Console.WriteLine("[DEBUG] Après RunPipeline()");
         }, cancellationToken).ConfigureAwait(false);
     }
 
