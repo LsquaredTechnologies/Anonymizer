@@ -2,6 +2,7 @@
 mod face_detector;
 mod font_map;
 mod layout_analysis;
+mod markdown_generator;
 mod models;
 mod pdf_generator;
 mod pdf_parser;
@@ -92,14 +93,20 @@ fn run_redaction_pipeline(
     let mut doc = Document::load(input_path)?;
 
     // Low-level extraction (Letters -> Physical Words)
+    // On mémorise au passage le numéro de page (1-indexé) associé à chaque
+    // ObjectId de page, pour pouvoir plus tard produire un export Markdown
+    // lisible (séparateurs "Page N") sans avoir à reparcourir le document.
     let mut all_pages_words = Vec::new();
-    for page_id in doc.page_iter() {
+    let mut page_numbers: std::collections::HashMap<lopdf::ObjectId, usize> =
+        std::collections::HashMap::new();
+    for (page_index, page_id) in doc.page_iter().enumerate() {
+        page_numbers.insert(page_id, page_index + 1);
         let words = pdf_parser::extract_words(&doc, page_id)?;
         all_pages_words.push(words);
     }
 
     println!("Semantic analysis...");
-    let paragraphs = layout_analysis::build_segmented_layout(all_pages_words);
+    let paragraphs = layout_analysis::build_segmented_layout_pdfpig(all_pages_words);
 
     println!("Initializing detection engines (Multi-agents)...");
 
@@ -125,25 +132,25 @@ fn run_redaction_pipeline(
             continue;
         }
 
-        let mut search_offset = 0;
+        // Comparaison d'intervalles directe (offset connu à l'avance, voir
+        // Word::para_char_range) : plus de curseur de recherche séquentiel,
+        // donc plus de désynchronisation possible sur des tokens courts et
+        // répétés (dates, numéros de téléphone...).
         for word in paragraph
             .blocks
             .iter()
             .flat_map(|b| &b.lines)
             .flat_map(|l| &l.words)
         {
-            let Some(local_idx) = paragraph.text[search_offset..].find(&word.text) else {
+            let Some(range) = &word.para_char_range else {
                 continue;
             };
-            let word_start = search_offset + local_idx;
-            let word_end = word_start + word.text.len();
 
             let is_regex_pii = regex_spans
                 .iter()
-                .any(|span| word_start.max(span.start) < word_end.min(span.end));
+                .any(|span| range.start.max(span.start) < range.end.min(span.end));
 
             if is_regex_pii {
-                // CORRECTION 1 : Remplacement de std::ptr::eq par une comparaison structurelle de valeur
                 let already_exists = redaction_targets.iter().any(|w| {
                     w.page_id == word.page_id && w.bbox == word.bbox && w.text == word.text
                 });
@@ -153,7 +160,6 @@ fn run_redaction_pipeline(
                     regex_count += 1;
                 }
             }
-            search_offset = word_end;
         }
     }
     println!(
@@ -205,6 +211,23 @@ fn run_redaction_pipeline(
     pdf_generator::apply_text_redaction(&mut doc, &redaction_targets)?;
 
     doc.save(output_str)?;
+
+    // Génère en complément un export Markdown anonymisé (même liste de
+    // cibles de caviardage que le PDF), à côté du fichier de sortie, ex:
+    // "document.redacted.pdf" -> "document.redacted.md".
+    println!("Generating redacted markdown export...");
+    let markdown_content = markdown_generator::generate_markdown(
+        file_prefix,
+        &paragraphs,
+        &redaction_targets,
+        &page_numbers,
+    );
+    let markdown_path = output_path_path.with_extension("md");
+    std::fs::write(&markdown_path, markdown_content)?;
+    println!(
+        "      -> Markdown export written to {}",
+        markdown_path.display()
+    );
 
     println!("\n[Success] Anonymization pipeline executed successfully.");
     Ok(())

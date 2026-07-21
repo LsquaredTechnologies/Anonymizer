@@ -1,23 +1,38 @@
 // src/layout_analysis.rs
-use crate::models::{Block, Line, Paragraph, Word};
+use crate::models::{Block, Line, Paragraph, Word, Letter};
 
-pub fn build_segmented_layout(pages_words: Vec<Vec<Word>>) -> Vec<Paragraph> {
-    let mut all_blocks = Vec::new();
+// =========================================================================
+// 1. PIPELINE PRINCIPAL : INTEGRATION PDFPIG
+// =========================================================================
+
+pub fn build_segmented_layout_pdfpig(pages_words_or_letters: Vec<Vec<Word>>) -> Vec<Paragraph> {
+    let mut paragraphs = Vec::new();
     let mut global_font_sum = 0.0;
     let mut global_word_count = 0.0;
+    let mut all_ordered_blocks = Vec::new();
 
-    for words in pages_words {
-        if words.is_empty() {
+    for words_on_page in pages_words_or_letters {
+        if words_on_page.is_empty() {
             continue;
         }
-        for w in &words {
-            global_font_sum += w.font_size;
+
+        // On extrait le vrai page_id stocké dans le premier mot de la page
+        let page_id = words_on_page[0].page_id;
+
+        let mut page_letters = Vec::new();
+        for word in words_on_page {
+            global_font_sum += word.font_size;
             global_word_count += 1.0;
+            page_letters.extend(word.letters);
         }
 
-        let lines = words_to_lines(words);
-        let blocks = lines_to_blocks(lines);
-        all_blocks.extend(blocks);
+        // On transmet le page_id à l'extracteur de mots
+        let exact_words = nearest_neighbour_word_extractor(page_letters, page_id);
+
+        let text_blocks = docstrum_page_segmenter(exact_words);
+        let ordered_blocks = unsupervised_reading_order_detector(text_blocks);
+
+        all_ordered_blocks.extend(ordered_blocks);
     }
 
     let avg_font_size = if global_word_count > 0.0 {
@@ -25,123 +40,137 @@ pub fn build_segmented_layout(pages_words: Vec<Vec<Word>>) -> Vec<Paragraph> {
     } else {
         10.0
     };
-    let mut paragraphs = Vec::new();
-    if all_blocks.is_empty() {
+
+    if all_ordered_blocks.is_empty() {
         return paragraphs;
     }
 
+    // =========================================================================
+    // 2. RECONSTRUCTION DES PARAGRAPHES & OFFSETS (Maintien de votre logique NER)
+    // =========================================================================
     let mut current_para_text = String::new();
-    let mut current_para_blocks = Vec::new();
+    let mut current_para_blocks: Vec<Block> = Vec::new();
 
-    for block in all_blocks {
-        let mut block_text = String::new();
-        let mut block_font_sum = 0.0;
-        let mut block_word_count = 0.0;
-
-        for line in &block.lines {
-            for word in &line.words {
-                block_text.push_str(&word.text);
-                block_text.push(' ');
-                block_font_sum += word.font_size;
-                block_word_count += 1.0;
-            }
-        }
-        let block_avg_font = if block_word_count > 0.0 {
-            block_font_sum / block_word_count
-        } else {
-            10.0
-        };
+    for mut block in all_ordered_blocks {
+        // Calcule les offsets et la taille de police moyenne du bloc
+        let (block_text, block_avg_font) = annotate_block_offsets(&mut block);
         let is_heading = block_avg_font > (avg_font_size * 1.25);
 
         if is_heading {
             if !current_para_blocks.is_empty() {
-                paragraphs.push(Paragraph {
-                    text: current_para_text.trim().to_string(),
-                    blocks: current_para_blocks.clone(),
-                    is_heading: false,
-                });
-                current_para_text.clear();
-                current_para_blocks.clear();
+                paragraphs.push(finalize_paragraph(
+                    std::mem::take(&mut current_para_text),
+                    std::mem::take(&mut current_para_blocks),
+                    false,
+                ));
             }
-            paragraphs.push(Paragraph {
-                text: block_text.trim().to_string(),
-                blocks: vec![block],
-                is_heading: true,
-            });
+            paragraphs.push(finalize_paragraph(block_text, vec![block], true));
         } else {
             let ends_with_punctuation = block_text.trim().ends_with('.')
                 || block_text.trim().ends_with(':')
                 || block_text.trim().ends_with('!');
+
+            let base = current_para_text.len();
+            shift_block_offsets(&mut block, base);
             current_para_text.push_str(&block_text);
             current_para_blocks.push(block);
 
             if ends_with_punctuation {
-                paragraphs.push(Paragraph {
-                    text: current_para_text.trim().to_string(),
-                    blocks: current_para_blocks.clone(),
-                    is_heading: false,
-                });
-                current_para_text.clear();
-                current_para_blocks.clear();
+                paragraphs.push(finalize_paragraph(
+                    std::mem::take(&mut current_para_text),
+                    std::mem::take(&mut current_para_blocks),
+                    false,
+                ));
             }
         }
     }
 
     if !current_para_blocks.is_empty() {
-        paragraphs.push(Paragraph {
-            text: current_para_text.trim().to_string(),
-            blocks: current_para_blocks,
-            is_heading: false,
-        });
+        paragraphs.push(finalize_paragraph(
+            current_para_text,
+            current_para_blocks,
+            false,
+        ));
     }
 
     paragraphs
 }
 
-fn words_to_lines(mut words: Vec<Word>) -> Vec<Line> {
-    words.sort_by(|a, b| {
-        b.baseline_y
-            .partial_cmp(&a.baseline_y)
-            .unwrap()
+// =========================================================================
+// 3. SOUS-ALGORITHMES PDFPIG (PORTAGE RUST)
+// =========================================================================
+
+/// Équivalent de : NearestNeighbourWordExtractor.cs
+fn nearest_neighbour_word_extractor(mut letters: Vec<Letter>, page_id: lopdf::ObjectId) -> Vec<Word> {
+    if letters.is_empty() { return Vec::new(); }
+
+    letters.sort_by(|a, b| {
+        b.baseline_y.partial_cmp(&a.baseline_y).unwrap()
             .then(a.bbox.x.partial_cmp(&b.bbox.x).unwrap())
     });
-    let mut lines: Vec<Line> = Vec::new();
 
-    let is_special_str = |s: &str| {
-        if s.len() != 1 {
-            return false;
+    let mut words = Vec::new();
+    let mut current_word_letters: Vec<Letter> = Vec::new();
+
+    for letter in letters {
+        if letter.value.is_whitespace() || letter.value == '\u{00a0}' {
+            continue;
         }
-        let c = s.chars().next().unwrap();
-        c.is_ascii_punctuation()
-    };
+
+        if current_word_letters.is_empty() {
+            current_word_letters.push(letter);
+            continue;
+        }
+
+        let last = current_word_letters.last().unwrap();
+        let last_right = last.bbox.x + last.bbox.width;
+        let horizontal_gap = letter.bbox.x - last_right;
+        let vertical_diff = (letter.baseline_y - last.baseline_y).abs();
+
+        let v_tolerance = last.font_size * 0.2;
+        let word_space_threshold = last.font_size * 0.3;
+
+        if vertical_diff < v_tolerance && horizontal_gap >= -2.0 && horizontal_gap < word_space_threshold {
+            current_word_letters.push(letter);
+        } else {
+            // Passez le page_id ici
+            words.push(build_word_from_letters(&current_word_letters, page_id));
+            current_word_letters.clear();
+            current_word_letters.push(letter);
+        }
+    }
+
+    if !current_word_letters.is_empty() {
+        // Et ici
+        words.push(build_word_from_letters(&current_word_letters, page_id));
+    }
+
+    words
+}
+
+/// Équivalent de : DocstrumBoundingBoxes.cs
+fn docstrum_page_segmenter(mut words: Vec<Word>) -> Vec<Block> {
+    if words.is_empty() { return Vec::new(); }
+
+    // 1. Regroupement des mots en lignes (Words -> Lines)
+    words.sort_by(|a, b| b.baseline_y.partial_cmp(&a.baseline_y).unwrap());
+    let mut lines: Vec<Line> = Vec::new();
 
     for word in words {
         let mut added = false;
         for line in lines.iter_mut() {
-            // Lenient alignment to integrate isolated punctuation into the current line
-            let lenient = is_special_str(&word.text);
-            let max_v = if lenient { word.font_size * 0.8 } else { 6.0 };
+            let v_tolerance = word.font_size * 0.4;
+            let inline = (word.baseline_y - line.baseline_y).abs() < v_tolerance;
 
-            // Comparison on the baseline (stable), not on the visual bbox which
-            // varies according to the stems/descenders of the word (a "g" and a "T" do not have the
-            // same bbox.y even though they are on the same line).
-            let inline = (word.baseline_y - line.baseline_y).abs() < max_v;
-            let no_column_gap =
-                (word.bbox.x - (line.bbox.x + line.bbox.width)).abs() < (word.font_size * 2.5);
+            // Evite l'effondrement des colonnes : maximum 2.5 à 3.0 espaces de police d'écart horizontal
+            let max_h_gap = word.font_size * 2.8;
+            let no_column_gap = (word.bbox.x - (line.bbox.x + line.bbox.width)).abs() < max_h_gap;
 
             if inline && no_column_gap {
-                // Physical fusion of BBoxes in the line (purely visual, the reference baseline
-                // of the line itself does not change)
                 let min_x = line.bbox.x.min(word.bbox.x);
                 let max_x = (line.bbox.x + line.bbox.width).max(word.bbox.x + word.bbox.width);
-                let min_y = line.bbox.y.min(word.bbox.y);
-                let max_y = (line.bbox.y + line.bbox.height).max(word.bbox.y + word.bbox.height);
-
                 line.bbox.x = min_x;
                 line.bbox.width = max_x - min_x;
-                line.bbox.y = min_y;
-                line.bbox.height = max_y - min_y;
-
                 line.words.push(word.clone());
                 added = true;
                 break;
@@ -156,22 +185,26 @@ fn words_to_lines(mut words: Vec<Word>) -> Vec<Line> {
             });
         }
     }
-    lines
-}
 
-fn lines_to_blocks(mut lines: Vec<Line>) -> Vec<Block> {
+    // Assure que chaque ligne lise ses mots strictement de gauche à droite
+    for line in &mut lines {
+        line.words.sort_by(|a, b| a.bbox.x.partial_cmp(&b.bbox.x).unwrap());
+    }
+
+    // 2. Regroupement des lignes en Blocs (Lines -> Blocks)
     lines.sort_by(|a, b| b.baseline_y.partial_cmp(&a.baseline_y).unwrap());
     let mut blocks: Vec<Block> = Vec::new();
 
     for line in lines {
         let mut added = false;
         for block in blocks.iter_mut() {
-            // Distance to the baseline of the LAST added line (actual line spacing),
-            // rather than to block.bbox.y which drifts with cumulative stems/descenders.
-            let close_y = (line.baseline_y - block.baseline_y).abs() < 18.0;
-            // Slight horizontal margin to capture punctuation shifted at the end of the block
-            let x_overlap = line.bbox.x < (block.bbox.x + block.bbox.width + 10.0)
-                && (line.bbox.x + line.bbox.width) > (block.bbox.x - 10.0);
+            // L'interligne max basé sur la hauteur de la ligne (Docstrum standard)
+            let max_line_spacing = line.bbox.height * 1.8;
+            let close_y = (line.baseline_y - block.baseline_y).abs() < max_line_spacing;
+
+            // On ne fusionne verticalement que s'il y a un chevauchement horizontal (même colonne)
+            let x_overlap = line.bbox.x < (block.bbox.x + block.bbox.width)
+                && (line.bbox.x + line.bbox.width) > block.bbox.x;
 
             if close_y && x_overlap {
                 let min_x = block.bbox.x.min(line.bbox.x);
@@ -184,7 +217,6 @@ fn lines_to_blocks(mut lines: Vec<Line>) -> Vec<Block> {
                 block.bbox.width = max_x - min_x;
                 block.bbox.height = max_y - min_y;
                 block.baseline_y = line.baseline_y;
-
                 block.lines.push(line.clone());
                 added = true;
                 break;
@@ -199,5 +231,118 @@ fn lines_to_blocks(mut lines: Vec<Line>) -> Vec<Block> {
             });
         }
     }
+
     blocks
+}
+
+/// Équivalent de : UnsupervisedReadingOrderDetector.cs
+fn unsupervised_reading_order_detector(mut blocks: Vec<Block>) -> Vec<Block> {
+    // Analyse des blocs en mode multi-colonnes
+    blocks.sort_by(|a, b| {
+        // Si l'écart X entre deux blocs dépasse le seuil, ils appartiennent à deux colonnes distinctes
+        let col_tolerance = 50.0;
+        let x_diff = a.bbox.x - b.bbox.x;
+
+        if x_diff.abs() > col_tolerance {
+            // Colonne de gauche d'abord, puis colonne de droite
+            a.bbox.x.partial_cmp(&b.bbox.x).unwrap()
+        } else {
+            // Même colonne : du haut vers le bas
+            b.baseline_y.partial_cmp(&a.baseline_y).unwrap()
+        }
+    });
+    blocks
+}
+
+// Helper pour générer une structure Word propre depuis la collection de ses structures Letter
+fn build_word_from_letters(letters: &[Letter], page_id: lopdf::ObjectId) -> Word {
+    let first = &letters[0];
+    let mut text = String::new();
+    let mut min_x = first.bbox.x;
+    let mut max_x = first.bbox.x + first.bbox.width;
+    let mut min_y = first.bbox.y;
+    let mut max_y = first.bbox.y + first.bbox.height;
+
+    for l in letters {
+        text.push(l.value);
+        min_x = min_x.min(l.bbox.x);
+        max_x = max_x.max(l.bbox.x + l.bbox.width);
+        min_y = min_y.min(l.bbox.y);
+        max_y = max_y.max(l.bbox.y + l.bbox.height);
+    }
+
+    Word {
+        text,
+        bbox: crate::models::BBox {
+            x: min_x,
+            y: min_y,
+            width: max_x - min_x,
+            height: max_y - min_y,
+        },
+        font_size: first.font_size,
+        page_id, // <--- On affecte directement le vrai ObjectId passé en paramètre
+        baseline_y: first.baseline_y,
+        letters: letters.to_vec(),
+        para_char_range: None,
+    }
+}
+
+// =========================================================================
+// 4. FONCTIONS DE RECALAGE DES OFFSETS (Vos fonctions d'origine préservées)
+// =========================================================================
+
+fn annotate_block_offsets(block: &mut Block) -> (String, f64) {
+    let mut text = String::new();
+    let mut font_sum = 0.0;
+    let mut word_count = 0.0;
+
+    for line in &mut block.lines {
+        for word in &mut line.words {
+            let start = text.len();
+            text.push_str(&word.text);
+            let end = text.len();
+            word.para_char_range = Some(start..end);
+            text.push(' ');
+
+            font_sum += word.font_size;
+            word_count += 1.0;
+        }
+    }
+
+    let avg_font = if word_count > 0.0 { font_sum / word_count } else { 10.0 };
+    (text, avg_font)
+}
+
+fn shift_block_offsets(block: &mut Block, base: usize) {
+    if base == 0 { return; }
+    for line in &mut block.lines {
+        for word in &mut line.words {
+            if let Some(r) = word.para_char_range.take() {
+                word.para_char_range = Some((r.start + base)..(r.end + base));
+            }
+        }
+    }
+}
+
+fn finalize_paragraph(raw_text: String, mut blocks: Vec<Block>, is_heading: bool) -> Paragraph {
+    let trimmed_start = raw_text.len() - raw_text.trim_start().len();
+    let final_text = raw_text.trim().to_string();
+    let final_len = final_text.len();
+
+    for block in &mut blocks {
+        for line in &mut block.lines {
+            for word in &mut line.words {
+                if let Some(r) = &word.para_char_range {
+                    let mut start = r.start.saturating_sub(trimmed_start);
+                    let mut end = r.end.saturating_sub(trimmed_start);
+                    if start > final_len { start = final_len; }
+                    if end > final_len { end = final_len; }
+                    if end < start { end = start; }
+                    word.para_char_range = Some(start..end);
+                }
+            }
+        }
+    }
+
+    Paragraph { text: final_text, blocks, is_heading }
 }
