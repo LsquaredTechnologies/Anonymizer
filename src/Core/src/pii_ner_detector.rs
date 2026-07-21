@@ -110,32 +110,30 @@ impl PiiNerDetector {
                 Vec::new()
             });
 
-            let mut search_offset = 0;
+            if pii_spans.is_empty() {
+                continue;
+            }
 
+            // Chaque mot connaît déjà sa position exacte dans `paragraph.text`
+            // (calculée une seule fois par layout_analysis) : simple test de
+            // chevauchement d'intervalles, aucune recherche de sous-chaîne.
             for word in paragraph
                 .blocks
                 .iter()
                 .flat_map(|b| &b.lines)
                 .flat_map(|l| &l.words)
             {
-                // Si le mot n'est pas trouvé à partir du curseur courant
-                // (OCR imparfait, doublon, etc.), on passe au suivant sans
-                // faire avancer le curseur plutôt que de tout bloquer.
-                let Some(local_idx) = paragraph.text[search_offset..].find(&word.text) else {
+                let Some(range) = &word.para_char_range else {
                     continue;
                 };
-                let word_start = search_offset + local_idx;
-                let word_end = word_start + word.text.len();
 
                 let is_pii = pii_spans
                     .iter()
-                    .any(|span| word_start.max(span.start) < word_end.min(span.end));
+                    .any(|span| range.start.max(span.start) < range.end.min(span.end));
 
                 if is_pii {
                     words_to_redact.push(word.clone());
                 }
-
-                search_offset = word_end;
             }
         }
 

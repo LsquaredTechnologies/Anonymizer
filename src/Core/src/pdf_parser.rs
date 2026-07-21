@@ -155,9 +155,6 @@ fn parse_letters(
     op_index: usize,
     array_item: Option<usize>,
 ) {
-    // Decode via the actual font table (CID/GID -> Unicode + actual width).
-    // (glyph, byte_offset, byte_length) to be able to precisely erase
-    // each glyph later without affecting neighboring glyphs.
     let (glyphs, height_ratio, y_offset_ratio): (
         Vec<(font_map::GlyphInfo, usize, usize)>,
         f64,
@@ -206,8 +203,6 @@ fn parse_letters(
 
         let width = font_size * g.width;
         let height = font_size * height_ratio;
-        // Constant offset per font: the bottom of the box extends below the baseline (descenders),
-        // identical for all letters of this font/size.
         let baseline_y = m_abs[5];
         let y = baseline_y + font_size * y_offset_ratio;
 
@@ -227,119 +222,113 @@ fn parse_letters(
     }
 }
 
+// =========================================================================
+// ALGORITHME LOGIQUE : NEAREST NEIGHBOUR WORD EXTRACTOR (PdfPig adaptation)
+// =========================================================================
 fn reconstruct_words(mut letters: Vec<Letter>, page_id: ObjectId) -> Vec<Word> {
     if letters.is_empty() {
         return vec![];
     }
-    letters.sort_by(|a, b| {
-        b.baseline_y
-            .partial_cmp(&a.baseline_y)
-            .unwrap()
-            .then(a.bbox.x.partial_cmp(&b.bbox.x).unwrap())
-    });
+
+    // 1. Tri initial "Flou" : On trie d'abord par Y de haut en bas
+    letters.sort_by(|a, b| b.baseline_y.partial_cmp(&a.baseline_y).unwrap());
 
     let mut words = Vec::new();
-    let mut current_word = String::new();
-    let mut current_word_letters = Vec::new();
-    let mut word_bbox: Option<BBox> = None;
-    let mut last_letter: Option<Letter> = None;
-
-    // Only true isolated punctuation, never letters (accented or not)
-    let is_special = |c: char| c.is_ascii_punctuation();
-    let mut saw_space = false;
+    let mut current_word_letters: Vec<Letter> = Vec::new();
 
     for letter in letters {
+        // Ignorer les espaces physiques du flux PDF (on calcule les espaces géométriquement)
         if letter.value.is_whitespace() || letter.value == '\u{00a0}' {
-            saw_space = true;
             continue;
         }
 
-        // A true space in the text flow is a reliable word separator:
-        // it takes precedence over any geometric heuristic (kerning, attached punctuation...).
-        let is_new_word = if saw_space {
-            true
+        if current_word_letters.is_empty() {
+            current_word_letters.push(letter);
+            continue;
+        }
+
+        let last = current_word_letters.last().unwrap();
+
+        // Distance géométrique locale entre la fin de la dernière lettre et le début de celle-ci
+        let last_right = last.bbox.x + last.bbox.width;
+        let horizontal_gap = letter.bbox.x - last_right;
+        let vertical_diff = (letter.baseline_y - last.baseline_y).abs();
+
+        // Seuils de tolérance proportionnels à la taille de la police
+        let v_tolerance = last.font_size * 0.2;         // Alignement vertical sur la même ligne
+        let word_space_threshold = last.font_size * 0.3; // Seuil d'un espace mot (30% de la hauteur de police)
+
+        // Si la lettre est alignée verticalement et que le gap horizontal est inférieur au seuil,
+        // alors elle appartient au même mot. Le seuil négatif (-2.0) gère les légers chevauchements/italiques.
+        if vertical_diff < v_tolerance && horizontal_gap >= -2.0 && horizontal_gap < word_space_threshold {
+            current_word_letters.push(letter);
         } else {
-            match &last_letter {
-                Some(last) => {
-                    // Comparison on the baseline (stable), not on the visual bbox
-                    // which varies with the stems/descenders of each glyph.
-                    let vertical_dist = (letter.baseline_y - last.baseline_y).abs();
-                    let horizontal_dist = letter.bbox.x - (last.bbox.x + last.bbox.width);
-
-                    // Leniency only for attaching isolated punctuation to the current word,
-                    // never for attaching a normal word to the previous one.
-                    let lenient = is_special(letter.value);
-                    let max_v = if lenient { letter.font_size * 0.8 } else { 6.0 };
-                    // Expanded threshold: no need to be strict for detecting spaces,
-                    // which prevents cutting a word in the middle due to kerning TJ.
-                    let max_h = if lenient {
-                        letter.font_size * 0.4
-                    } else {
-                        letter.font_size * 0.5
-                    };
-
-                    let is_overlapping_h =
-                        horizontal_dist < max_h && horizontal_dist > -last.bbox.width;
-
-                    vertical_dist > max_v || !is_overlapping_h
-                }
-                None => true,
+            // Clôture du mot courant avant d'entamer le suivant
+            if let Some(word) = build_word_from_extracted_letters(&current_word_letters, page_id) {
+                words.push(word);
             }
-        };
-        saw_space = false;
-
-        if is_new_word && !current_word.is_empty() {
-            if let Some(bbox) = word_bbox.take() {
-                let trimmed = current_word.trim();
-                if !trimmed.is_empty() {
-                    words.push(Word {
-                        text: trimmed.to_string(),
-                        bbox,
-                        font_size: last_letter.as_ref().unwrap().font_size,
-                        page_id,
-                        letters: current_word_letters.clone(), // Injection
-                        baseline_y: current_word_letters[0].baseline_y,
-                    });
-                }
-            }
-            current_word.clear();
             current_word_letters.clear();
-        }
-
-        if current_word.is_empty() {
-            word_bbox = Some(letter.bbox.clone());
-        } else if let Some(ref mut bbox) = word_bbox {
-            let min_x = bbox.x.min(letter.bbox.x);
-            let max_x = (bbox.x + bbox.width).max(letter.bbox.x + letter.bbox.width);
-            let min_y = bbox.y.min(letter.bbox.y);
-            let max_y = (bbox.y + bbox.height).max(letter.bbox.y + letter.bbox.height);
-
-            bbox.x = min_x;
-            bbox.width = max_x - min_x;
-            bbox.y = min_y;
-            bbox.height = max_y - min_y;
-        }
-
-        current_word.push(letter.value);
-        current_word_letters.push(letter.clone());
-        last_letter = Some(letter);
-    }
-
-    if !current_word.is_empty() {
-        if let Some(bbox) = word_bbox {
-            let trimmed = current_word.trim();
-            if !trimmed.is_empty() {
-                words.push(Word {
-                    text: trimmed.to_string(),
-                    bbox,
-                    font_size: last_letter.unwrap().font_size,
-                    page_id,
-                    baseline_y: current_word_letters[0].baseline_y,
-                    letters: current_word_letters,
-                });
-            }
+            current_word_letters.push(letter);
         }
     }
+
+    // Traitement du dernier mot restant
+    if !current_word_letters.is_empty() {
+        if let Some(word) = build_word_from_extracted_letters(&current_word_letters, page_id) {
+            words.push(word);
+        }
+    }
+
+    // Étape CRUCIALE : Une fois tous les mots capturés sur la page entière,
+    // on effectue un tri stable par ligne (Y) et colonne (X) pour renvoyer un flux cohérent à l'analyseur
+    words.sort_by(|a, b| {
+        b.baseline_y.partial_cmp(&a.baseline_y).unwrap()
+            .then(a.bbox.x.partial_cmp(&b.bbox.x).unwrap())
+    });
 
     words
+}
+
+// Générateur de structure de mot unifié
+fn build_word_from_extracted_letters(letters: &[Letter], page_id: ObjectId) -> Option<Word> {
+    if letters.is_empty() { return None; }
+
+    // S'assurer que les lettres à l'intérieur du mot sont triées de gauche à droite
+    let mut sorted_letters = letters.to_vec();
+    sorted_letters.sort_by(|a, b| a.bbox.x.partial_cmp(&b.bbox.x).unwrap());
+
+    let first = &sorted_letters[0];
+    let mut text = String::new();
+    let mut min_x = first.bbox.x;
+    let mut max_x = first.bbox.x + first.bbox.width;
+    let mut min_y = first.bbox.y;
+    let mut max_y = first.bbox.y + first.bbox.height;
+
+    for l in &sorted_letters {
+        text.push(l.value);
+        min_x = min_x.min(l.bbox.x);
+        max_x = max_x.max(l.bbox.x + l.bbox.width);
+        min_y = min_y.min(l.bbox.y);
+        max_y = max_y.max(l.bbox.y + l.bbox.height);
+    }
+
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return None;
+    }
+
+    Some(Word {
+        text: trimmed.to_string(),
+        bbox: BBox {
+            x: min_x,
+            y: min_y,
+            width: max_x - min_x,
+            height: max_y - min_y,
+        },
+        font_size: first.font_size,
+        page_id,
+        baseline_y: first.baseline_y,
+        letters: sorted_letters,
+        para_char_range: None,
+    })
 }

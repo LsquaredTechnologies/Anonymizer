@@ -1,5 +1,6 @@
 // src/models.rs
 use lopdf::ObjectId;
+use std::ops::Range;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct BBox {
@@ -36,6 +37,13 @@ pub struct Word {
     pub page_id: ObjectId,
     pub letters: Vec<Letter>, // Memorization of letters for light green tracing
     pub baseline_y: f64,
+    // Position exacte (en octets) de ce mot dans `Paragraph::text`, calculée
+    // une seule fois pendant la construction du paragraphe (voir
+    // `layout_analysis::build_segmented_layout`). Remplace toute recherche de
+    // sous-chaîne a posteriori (fragile en cas de tokens répétés comme les
+    // dates ou les numéros de téléphone). `None` tant que le mot n'a pas
+    // encore été rattaché à un paragraphe.
+    pub para_char_range: Option<Range<usize>>,
 }
 
 #[derive(Debug, Clone)]

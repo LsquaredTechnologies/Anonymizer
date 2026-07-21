@@ -24,7 +24,7 @@ impl PiiRegexDetector {
             email_regex: Regex::new(r"(?i)\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b").unwrap(),
             phone_regex: Regex::new(r"(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d+)+\b").unwrap(),
             date_regex: Regex::new(r"\b\d{2}[/-]\d{2}[/-]\d{4}\b").unwrap(),
-            url_regex: Regex::new(r"(?i)https?://(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)").unwrap(),
+            url_regex: Regex::new(r"(?i)((https?:)?//)?(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)").unwrap(),
             person_full_name_regex: Regex::new(r"(?m)^(?:#+\s*)?[A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+(?:[-'][A-ZÀ-ÖØ-Ý][a-zà-öø-ÿ]+)?[ \t\u00A0\u202F]+(?:[A-ZÀ-ÖØ-Ý]{3,}(?:[-'’][A-ZÀ-ÖØ-Ý]{2,})*|(?:[A-ZÀ-ÖØ-Ý][ \t\u00A0\u202F]+){2,}[A-ZÀ-ÖØ-Ý])\b").unwrap(),
         }
     }
