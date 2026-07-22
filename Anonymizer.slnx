@@ -1,6 +1,18 @@
 <Solution>
+  <Folder Name="/PdfPig/" />
+  <Folder Name="/PdfPig/src/">
+    <Project Path="PdfPig/src/UglyToad.PdfPig.Core/UglyToad.PdfPig.Core.csproj" />
+    <Project Path="PdfPig/src/UglyToad.PdfPig.DocumentLayoutAnalysis/UglyToad.PdfPig.DocumentLayoutAnalysis.csproj" />
+    <Project Path="PdfPig/src/UglyToad.PdfPig.Fonts/UglyToad.PdfPig.Fonts.csproj" />
+    <Project Path="PdfPig/src/UglyToad.PdfPig.Tokenization/UglyToad.PdfPig.Tokenization.csproj" />
+    <Project Path="PdfPig/src/UglyToad.PdfPig.Tokens/UglyToad.PdfPig.Tokens.csproj" />
+    <Project Path="PdfPig/src/UglyToad.PdfPig/UglyToad.PdfPig.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/Cli/Anonymizer.Cli.csproj" />
     <Project Path="src/Win/Anonymizer.Win.csproj" />
+  </Folder>
+  <Folder Name="/src/Attempt/">
+    <Project Path="src/Attempt/Anon.Cli.csproj" />
   </Folder>
 </Solution>
