@@ -1,6 +1,7 @@
 # /// script
 # requires-python = ">=3.12"
 # dependencies = [
+#   "huggingface_hub[hf_xet]",
 #   "numpy",
 #   "optimum[onnxruntime]",
 #   "transformers",
